@@ -57,7 +57,7 @@ if(isset($_POST['Schakel'])) {
 		if($Switchpoort=='Open') echo '<script language="javascript">alert("WARNING: Poort open!")</script>';}}
 if(isset($_POST['Naam'])) echo '<script type="text/javascript">setTimeout(\'window.location.href=window.location.href;\', 900);</script>';
 
-echo '<div style="position: absolute;top: 7px;left: 237px; width:180px;"><a href="floorplan.php" style="padding:12px 42px;border:none;background:none;font-size:16px; font-weight:500;"><font size="+3" style="font-weight:500">'.strftime("%k:%M:%S", $time).'</font></a></div>
+echo '<div style="position: absolute;top: 7px;left: 237px; width:180px;"><a href="" style="padding:12px 42px;border:none;background:none;font-size:16px; font-weight:500;"><font size="+3" style="font-weight:500">'.strftime("%k:%M:%S", $time).'</font></a></div>
 <div style="position: absolute;top: 0px;left: 0px; width:80px; height:305px; background:#ddd;border-radius:10px; padding-top:10px;" >
 <div style="position: absolute;top: 255px;left: 12px; width:55px;padding:0px;cursor: pointer;" onclick="location.href=\'rain.php\'"><img src="images/rain.png"/ title="'.strftime("%a %e %b %k:%M:%S", $RainTimeRegen).'" style="cursor:pointer" onclick="location.href=\'rain.php\'"></div>
 <div style="position: absolute;top: 290px;left: 13px; width:55px;background:rgba(222, 222, 222, 0.8); padding:0px;cursor: pointer;" onclick="location.href=\'rain.php\'">'.$RainRegen.' / '.$TextBuienradar.'</div></div>
@@ -125,15 +125,17 @@ if($SwitchTimepoort>$eendag) Timestamp('poort',90,315,377);
 if($SwitchTimeBrander>$eendag) Timestamp('Brander',0,812,265);
 if($SwitchTimeLicht_Zolder>$eendag) Timestamp('Licht_Zolder',0,688,266);
 if($SwitchTimeBureel_Tobi>$eendag) Timestamp('Bureel_Tobi',0,782,433);
+if($Switchpoort != 'Closed') echo '<div style="position: absolute;top:262px;left:404px;width:25px;height:128px;background:rgba(255, 0, 0, 1);z-index:-10;"></div>';
+if($SwitchAchterdeur != 'Closed') echo '<div style="position: absolute;top:264px;left:81px;width:30px;height:48px;background:rgba(255, 0, 0, 1);z-index:-10;"></div>';
 if($SwitchBureel_Tobi!='Off') echo'<div style="position:absolute;top:18px;left:56px;width:50px;cursor:pointer;text-align:center;">'.$PowerP_Bureel_Tobi.'</div>';
 echo '<div style="position: absolute;top: 840px;left: 4px; width:500px; text-align:left;" id="cpuinfo">
 <font color="#CCCCCC">CPU '.$SwitchCPU_Usage.' - Memory '.$SwitchMemory_Usage.' - SD '.$SwitchHDD__.' - '.$TempInternal_Temperature.'°C<br/>'.shell_exec('uptime').'<br/></font></div>';
-} else echo '<div style="background:#ddd;"><a href="floorplan.php">Geen verbinding met Domoticz</a></div>';	
+} else echo '<div style="background:#ddd;"><a href="">Geen verbinding met Domoticz</a></div>';	
 } else {header("Location: index.php");die("Redirecting to: index.php");}
 ?>
 <script src="scripts/jquery-2.1.4.min.js"></script>
 <script type="text/javascript">
 function toggle_visibility(id) {var e = document.getElementById(id);if(e.style.display == 'inherit') e.style.display = 'none';else e.style.display = 'inherit';}
-setTimeout('window.location.href=window.location.href;', 4900);
+setTimeout('window.location.href=window.location.href;', 9900);
 </script>
 </body></html>

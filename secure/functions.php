@@ -1,4 +1,5 @@
 <?php
+//error_reporting(E_ALL);ini_set("display_errors", "on");
 $domoticzurl='http://ip:port/json.htm?';
 $authenticated = false;
 $authenticated = true;
@@ -21,7 +22,7 @@ function ios($msg) {
 	$fmi->playSound($appledevice,$msg);
 }
 function sms($msg, $device) {
-	file_get_contents('http://api.clickatell.com/http/sendmsg?user=&password=&api_id=text='.urlencode($msg).'&from=');
+	file_get_contents('http://api.clickatell.com/http/sendmsg?user='.$smsuser.'&password='.$smspassword.'&api_id='.$smsapi.'&to='.$smstofrom.'&text='.urlencode($msg).'&from='.$smstofrom.'');
 }
 function domlog($msg) {
 	global $domoticzurl;
@@ -38,63 +39,39 @@ function telegram($msg) {
 }
 function Schakel($idx, $cmd) {
 	global $domoticzurl, $tekst;
-	if($tekst == true) {
-		echo '<tr><td colspan="3"><b>Schakel '.$idx.' = '.$cmd.'</b></td></tr>';
-		echo file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd);
-		echo '<hr>';
-	} else {
-		$reply = json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd), true);
-		if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
-		return $reply;
-	}
+	$reply = json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
 }
 function Scene($idx) {
 	global $domoticzurl, $tekst;
-	if($tekst == true) {
-		echo '<tr><td colspan="3"><b>Schakel '.$idx.' = Toggle</b></td></tr>';
-		echo file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On');
-		echo '<hr>';
-	} else {
-		$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'), true);
-		if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
-		return $reply;
-	}
+	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
 }	
 function Dim($idx, $level) {
 	global $domoticzurl, $tekst;
-	if($tekst == true) {
-		echo '<tr><td colspan="3"><b>Dim '.$idx.' = '.$level.'</b></td></tr>';
-		echo file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level);
-		echo '<hr>';
-	} else {
-		$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level), true);
-		if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
-		return $reply;
-	}
+	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
 }	
 function Udevice($idx, $nvalue, $svalue) {
 	global $domoticzurl, $tekst;
-	if($tekst == true) {
-		echo '<tr><td colspan="3"><b>Udevice '.$idx.' = '.$svalue.'</b></td></tr>';
-		echo file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue);
-		echo '<hr>';
-	} else {
-		$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue), true);
-		if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
-		return $reply;
-	}
+	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
+}
+function Textdevice($idx, $text) {
+	global $domoticzurl, $tekst;
+	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$text), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
 }
 function ResetSmoke($idx, $cmd) {
 	global $domoticzurl, $tekst;
-	if($tekst == true) {
-		echo '<tr><td colspan="3"><b>Reset '.$idx.' = '.$cmd.'</b></td></tr>';
-		echo file_get_contents($domoticzurl.'type=command&param=resetsecuritystatus&idx='.$idx.'&switchcmd='.$cmd);
-		echo '<hr>';
-	} else {
-		$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=resetsecuritystatus&idx='.$idx.'&switchcmd='.$cmd), true);
-		if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
-		return $reply;
-	}
+	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=resetsecuritystatus&idx='.$idx.'&switchcmd='.$cmd), true);
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	return $reply;
 }
 function Thermometer($name, $size, $boven, $links) {
 	global ${'Temp'.$name},${'Tempidx'.$name},${'Tempbat'.$name},${'TempTime'.$name}, $time;
@@ -131,17 +108,17 @@ function Schakelaar($name,$kind,$size,$boven,$links) {
 }
 function Dimmer($name,$size,$boven,$links) {
 	global ${'Dimmer'.$name},${'Dimmeridx'.$name},${'Dimmerlevel'.$name},${'DimmerTime'.$name};
-	echo '<div id="'.$name.'" style="position: absolute;top: 2px;left: 80px;width:300px;padding:50px;display:none;background:rgba(233, 233, 233, 0.9);border-radius:10px; z-index:100;">
+	echo '<div id="'.$name.'" class="dimmer" style="display:none;z-index:1000;">
 		<form method="POST">
         <output id="dimlevel'.$name.'" class="'.${'Dimmer'.$name}.'">'.$name.'</output><input type="hidden" name="Naam" value="'.$name.'">
 		<input name="dimlevel'.$name.'" id="dimlevel'.$name.'" type ="range" min ="0" max="100" step ="1" value ="'.${'Dimmerlevel'.$name}.'" onchange="this.form.submit()"/><br/><br/>
         </form>
-		<div style="position: absolute;top: 5px;right: 5px;z-index:100;" title="Close"><a href="floorplan.php"><img src="images/close.png" width="48px" height="48px" alt="Close" title="Close"/></a></div>
+		<div style="position: absolute;top: 5px;right: 5px;z-index:1000;" title="Close"><a href=""><img src="images/close.png" width="48px" height="48px" alt="Close" title="Close"/></a></div>
 	</div>
 	<div style="position: absolute;top:'.$boven.'px;left:'.$links.'px;" title="'.strftime("%a %e %b %k:%M:%S", ${'DimmerTime'.$name}).'">
 	<a href="#" onclick="toggle_visibility(\''.$name.'\');" style="text-decoration:none">';
 	echo ${'Dimmer'.$name}=='Off' ? '<input type="image" src="images/Light_Off.png" alt="Submit" height="'.$size.'px" width="auto">'
-								  : '<input type="image" src="images/Light_On.png"  alt="Submit" height="'.$size.'px" width="auto"><div style="position: absolute;top: 11px;left: 9px; width:30px;padding:0px;" title="'.${'Dimmerlevel'.$name}.'">'.number_format(${'Dimmerlevel'.$name},0).'</div>';
+								  : '<input type="image" src="images/Light_On.png"  alt="Submit" height="'.$size.'px" width="auto">';
 	echo '</a></div>';
 }
 function Smokedetector($name,$size,$boven,$links) {
@@ -183,7 +160,7 @@ function Setpoint($name,$size,$boven,$links) {
 					if (curValue<0) {curValue=0;}var curValueStr=curValue.toFixed(1);
 					$(\'#Actie'.$name.'\').val(curValueStr);}
 			</script>
-			<div style="position: absolute;top: 5px;right: 5px;z-index:100;" title="Close"><a href="floorplan.php"><img src="images/close.png" width="48px" height="48px" alt="Close" title="Close"/></a></div>
+			<div style="position: absolute;top: 5px;right: 5px;z-index:100;" title="Close"><a href="#"><img src="images/close.png" width="48px" height="48px" alt="Close" title="Close"/></a></div>
 		</div>';
 		echo '<div style="position: absolute;top:'.$boven.'px;left:'.$links.'px;"><a href="#" onclick="toggle_visibility(\'Verwarming'.$name.'\');" style="text-decoration:none">';
 		echo ${'Rad'.$name}>=${'Temp'.$name} ? '<input type="image" src="images/flame.png" alt="Submit" height="'.$size.'px" width="auto">':'<input type="image" src="images/flamegrey.png" alt="Submit" height="'.$size.'px" width="auto">';
@@ -201,4 +178,12 @@ function Motion($boven, $links, $breed, $hoog) {
 	global $SwitchThuis, $SwitchSlapen;
 	if($SwitchThuis == 'Off' || $SwitchSlapen == 'On') echo '<div style="position: absolute;top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;background:rgba(255, 0, 0, 0.5);z-index:-10;"></div>';
 												  else echo '<div style="position: absolute;top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;background:rgba(255, 0, 0, 0.1);z-index:-10;"></div>';
+}
+function RefreshZwave($node) {
+	file_get_contents('http://127.0.0.1:1602/#/Hardware');
+	$zwaveurl = 'http://127.0.0.1:1602/ozwcp/refreshpost.html';
+	$zwavedata = array('fun' => 'racp', 'node' => $node);
+	$zwaveoptions = array('http' => array('header' => 'Content-Type: application/x-www-form-urlencoded\r\n','method'  => 'POST','content' => http_build_query($zwavedata),),);
+	$zwavecontext  = stream_context_create($zwaveoptions);
+	for ($k = 1 ; $k <= 3; $k++){sleep(2);$result = file_get_contents($zwaveurl, false, $zwavecontext);echo $result.PHP_EOL;if($result=='OK') $k = 4;}
 }
