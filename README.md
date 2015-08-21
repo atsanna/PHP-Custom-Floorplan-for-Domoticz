@@ -44,5 +44,5 @@ It's up to you to create something for authentication (or don't publish on the n
 If you put this in /home/pi/domoticz/scripts/domoticz_main you'll have instant reaction of the hw2domoticz script.
 <pre>
 #!/bin/sh
-curl 'http://127.0.0.1:1603/secure/hw2domoticz.php'
+curl 'http://127.0.0.1:portofwwwserver/secure/hw2domoticz.php'
 </pre><br>
