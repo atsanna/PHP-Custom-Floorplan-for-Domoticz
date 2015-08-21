@@ -1,7 +1,8 @@
 # PHP Custom Floorplan for Domoticz.
 
 Goal: Using 1 page to view and control everything from my domoticz installation + using 1 script to automate everything else.
-Requirements: PHP enabled webserver, I use Apache on the same RPi. Authentication must be disabled for 127.0.0.1
+Requirements: PHP enabled webserver, I use Apache on the same RPi. Xcache recommended for storing timestamps of sent notifications.
+Authentication in Domoticz must be disabled for 127.0.0.1
 
 The page:
 <img src="http://i.imgur.com/09PpGwB.png"/>
@@ -32,13 +33,8 @@ Some things this script does for me:
 
 Installation:
 
-Place the files on a PHP enabled webserver. 
-Adjust domoticzurl in secure/functions.php
-If you want to use Clickatell sms you need to set the parameters in secure/functions.php
-All uservariables from domoticz are useable in the script.
-The function uservariable(name,type,value) will update that variable or create it if it doesn't exist yet.
-For telegram support you have to create uservariables 'telegrambot' and 'telegramchatid'.
-For iOS messages you have to create uservariables 'appleid', 'applepass' and 'appledevice'.
+Place the files on a PHP enabled webserver. Protect the secure folder for external access. 
+Adjust variables in secure/functions.php
 
 in secure/functions.php you'll see this:
 <pre>$authenticated = false;
