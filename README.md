@@ -4,8 +4,8 @@ Goal: Using 1 page to view and control everything from my domoticz installation 
 Requirements: PHP enabled webserver, I use Apache on the same RPi. Xcache recommended for storing timestamps of sent notifications.
 Authentication in Domoticz must be disabled for 127.0.0.1
 
-The page:
-<img src="http://i.imgur.com/09PpGwB.png"/>
+The page:<br>
+<img src="http://i.imgur.com/09PpGwB.png"/><br>
 The page fits perfect on a iPhone5 and can be added on startscreen as an application for full screen viewing.
 It's built by using a background image with the layout of the house, on top of that lot's of fixed positioned DIVs.
 
