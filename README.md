@@ -40,3 +40,9 @@ in secure/functions.php you'll see this:
 <pre>$authenticated = false;
 $authenticated = true;</pre><br/>
 It's up to you to create something for authentication (or don't publish on the net).
+
+If you put this in /home/pi/domoticz/scripts/domoticz_main you'll have instant reaction of the hw2domoticz script.
+<pre>
+#!/bin/sh
+curl 'http://127.0.0.1:1603/secure/hw2domoticz.php'
+</pre><br>
