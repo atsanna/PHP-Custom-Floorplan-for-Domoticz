@@ -1,20 +1,23 @@
 <?php
 //error_reporting(E_ALL);ini_set("display_errors", "on");
-$domoticzurl='http://ip:port/json.htm?';
 $authenticated = false;
+$domoticzurl='http://ip:port/json.htm?';
+$hwurl = 'http://ip:port/password/';
+$applepass = '***';
+$appledevice = '***';
+$appleid = '***';
+$telegrambot = '***';
+$telegramchatid = 12345678;
+$sms = false;
+$smsuser = '***';
+$smspassword = '***';
+$smsapi = 12345678;
+$smstofrom = 32123456789;
+
 $authenticated = true;
+
 setlocale(LC_ALL,'nl_NL.UTF-8');setlocale(LC_ALL, 'nld_nld');date_default_timezone_set('Europe/Brussels');$time=time();
-function uservariable($name, $type, $value) {
-	global $domoticzurl; //$type = 0 = Integer, 1 = Float(met komma),2 = String,3 = Date in format DD/MM/YYYY,4 = Time in 24 hr format HH:MM
-	$reply = json_decode(file_get_contents($domoticzurl.'type=command&param=updateuservariable&vname='.$name.'&vtype='.$type.'&vvalue='.$value), true);
-	print_r($reply);
-	if($reply['status']=='OK') $response = 'OK'; 
-	else {
-		$replys = json_decode(file_get_contents($domoticzurl.'type=command&param=saveuservariable&vname='.$name.'&vtype='.$type.'&vvalue='.$value), true);
-		$response = $replys['status'];
-	}
-	return $response;
-}
+
 function ios($msg) {
 	global $appleid, $applepass, $appledevice;
 	include ("findmyiphone.php");
@@ -26,7 +29,7 @@ function sms($msg, $device) {
 }
 function domlog($msg) {
 	global $domoticzurl;
-	file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));
+	file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));sleep(1);
 }
 function telegram($msg) {
 	global $telegrambot, $telegramchatid;
@@ -40,37 +43,37 @@ function telegram($msg) {
 function Schakel($idx, $cmd) {
 	global $domoticzurl, $tekst;
 	$reply = json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }
 function Scene($idx) {
 	global $domoticzurl, $tekst;
 	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }	
 function Dim($idx, $level) {
 	global $domoticzurl, $tekst;
 	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }	
 function Udevice($idx, $nvalue, $svalue) {
 	global $domoticzurl, $tekst;
 	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }
 function Textdevice($idx, $text) {
 	global $domoticzurl, $tekst;
 	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$text), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }
 function ResetSmoke($idx, $cmd) {
 	global $domoticzurl, $tekst;
 	$reply =  json_decode(file_get_contents($domoticzurl.'type=command&param=resetsecuritystatus&idx='.$idx.'&switchcmd='.$cmd), true);
-	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';
+	if($reply['status']=='OK') $reply = 'OK'; else $reply = 'ERROR';sleep(1);
 	return $reply;
 }
 function Thermometer($name, $size, $boven, $links) {
@@ -180,10 +183,22 @@ function Motion($boven, $links, $breed, $hoog) {
 												  else echo '<div style="position: absolute;top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;background:rgba(255, 0, 0, 0.1);z-index:-10;"></div>';
 }
 function RefreshZwave($node) {
-	file_get_contents('http://127.0.0.1:1602/#/Hardware');
+	global $domoticzurl;
+	file_get_contents($domoticzurl.'type=openzwavenodes&idx=5');
 	$zwaveurl = 'http://127.0.0.1:1602/ozwcp/refreshpost.html';
 	$zwavedata = array('fun' => 'racp', 'node' => $node);
-	$zwaveoptions = array('http' => array('header' => 'Content-Type: application/x-www-form-urlencoded\r\n','method'  => 'POST','content' => http_build_query($zwavedata),),);
+	$zwaveoptions = array(
+			'http' => array(
+			'header' => 'Content-Type: application/x-www-form-urlencoded\r\n',
+			'method'  => 'POST',
+			'content' => http_build_query($zwavedata),
+		),
+	);
 	$zwavecontext  = stream_context_create($zwaveoptions);
-	for ($k = 1 ; $k <= 3; $k++){sleep(2);$result = file_get_contents($zwaveurl, false, $zwavecontext);echo $result.PHP_EOL;if($result=='OK') $k = 4;}
+	for ($k = 1 ; $k <= 5; $k++){ 
+		sleep(2);
+		$result = file_get_contents($zwaveurl, false, $zwavecontext);
+		echo 'Refreshing Zwave node '.$node.' '.$result.'<br>';
+		if($result=='OK') break;
+	}
 }
