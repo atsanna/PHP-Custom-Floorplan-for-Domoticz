@@ -52,7 +52,7 @@ if($domoticz) {
 	
 	//Gemiddelde temperatuur binnen
 	if($SMeldingen=='On') {
-		$thermometers=array('Living','Badkamer','Kamer','KamerTobi','KamerJulius','SD_Zolder_Temperatuur');
+		$thermometers=array('Living','Badkamer','KamerTobi','KamerJulius','Zolder');
 		$avg=0;
 		foreach($thermometers as $thermometer) $avg=$avg+${'T'.$thermometer};
 		$avg=$avg / 6;
@@ -105,7 +105,7 @@ if($domoticz) {
 	if($RBadkamerZ!=$Set) {Udevice($RIBadkamerZ,0,$Set);}
 	
 	//Slaapkamer
-	$Set = 4.0;
+	/*$Set = 4.0;
 	if($SRaamKamer=='Closed' && $SThuis=='On') {
 		$Set = 12.0;
 		if($time < strtotime('8:00') || $time > strtotime('20:00')) $Set = 16.0;
@@ -113,7 +113,7 @@ if($domoticz) {
 	if($RKamer != $Set) {Udevice($RIKamer,0,$Set);$RKamer=$Set;}
 	if($RTKamer < $time - 8600) Udevice($RIKamer,0,$Set);
 	$Set = setradiator($TKamer, $RKamer);
-	if($RKamerZ!=$Set) {Udevice($RIKamerZ,0,$Set);}
+	if($RKamerZ!=$Set) {Udevice($RIKamerZ,0,$Set);}*/
 	
 	//Slaapkamer Tobi
 	$Set = 4.0;
@@ -146,8 +146,8 @@ if($domoticz) {
 	if($RKamerJuliusZ!=$Set) {Udevice($RIKamerJuliusZ,0,$Set);}
 	
 	//Brander
-	if(($TLiving < $RLiving || $TBadkamer < $RBadkamer || $TKamer < $RKamer || $TKamerTobi < $RKamerTobi || $TKamerJulius < $RKamerJulius ) && $SBrander == "Off" && $STBrander < $time-170) Schakel($SIBrander, 'On');
-	if($TLiving >= $RLiving-0.3 && $TBadkamer >= $RBadkamer - 0.9 && $TKamer >= $RKamer-0.3 && $TKamerTobi >= $RKamerTobi-0.3 && $TKamerJulius >= $RKamerJulius-0.3 && $SBrander == "On" && $STBrander < $time-230) Schakel($SIBrander, 'Off');
+	if(($TLiving < $RLiving || $TBadkamer < $RBadkamer || /*$TKamer < $RKamer || */$TKamerTobi < $RKamerTobi || $TKamerJulius < $RKamerJulius ) && $SBrander == "Off" && $STBrander < $time-170) Schakel($SIBrander, 'On');
+	if($TLiving >= $RLiving-0.3 && $TBadkamer >= $RBadkamer - 0.9 && /*$TKamer >= $RKamer-0.3 && */$TKamerTobi >= $RKamerTobi-0.3 && $TKamerJulius >= $RKamerJulius-0.3 && $SBrander == "On" && $STBrander < $time-230) Schakel($SIBrander, 'Off');
 	
 	//Subwoofer
 	if($SDenon=='On' && $SSubwoofer!='On')  Schakel($SISubwoofer,'On');
@@ -226,8 +226,9 @@ if($domoticz) {
 		if($RBLivingZZ>=0&&$RBLivingZZ<=100) {percentdevice(402,$RBLivingZZ);if($RBLivingZZ<20) telegram('Bat LivingZZ low');}
 		if($RBBadkamerZ>=0&&$RBBadkamerZ<=100) {percentdevice(403,$RBBadkamerZ);if($RBBadkamerZ<20) telegram('Bat BadkamerZ low');}
 		if($SBAchterdeurbat>=0&&$SBAchterdeurbat<=100) {percentdevice(404,$SBAchterdeurbat);if($SBAchterdeurbat<20) telegram('Bat Achterdeur low');}
-		if($TBSD_Zolder_Temperatuur>=0&&$TBSD_Zolder_Temperatuur<=100) {percentdevice(406,$TBSD_Zolder_Temperatuur);if($TBSD_Zolder_Temperatuur<20) telegram('Bat SD Zolder low');}
-		if($TBKamer>=0&&$TBKamer<=100) {percentdevice(552,$TBKamer);if($TBKamer<20) telegram('Bat SD Kamer low');}
+		if($TBZolder>=0&&$TBZolder<=100) {percentdevice(406,$TBZolder);if($TBZolder<20) telegram('Bat SD Zolder low');}
+		if($TBLiving>=0&&$TBLiving<=100) {percentdevice(552,$TBLiving);if($TBLiving<20) telegram('Bat SD Living low');}
+		//if($TBKamer>=0&&$TBKamer<=100) {percentdevice(552,$TBKamer);if($TBKamer<20) telegram('Bat SD Kamer low');}
 		if($TBKamerTobi>=0&&$TBKamerTobi<=100) {percentdevice(553,$TBKamerTobi);if($TBKamerTobi<20) telegram('Bat SD Kamer Tobi low');}
 		if($TBKamerJulius>=0&&$TBKamerJulius<=100) {percentdevice(554,$TBKamerJulius);if($TBKamerJulius<20) telegram('Bat SD Kamer Julius low');}
 		xcache_set('batteries',$time);
@@ -261,7 +262,13 @@ if($domoticz) {
 	}	
 	
 	//End Acties
-} else {if(xcache_get('domoticzconnection')!='down') {xcache_set('domoticzconnection','down');telegram('Geen verbinding met Domoticz');}
+} else {
+	if(xcache_get('domoticzconnection')!='down') {
+		xcache_set('domoticzconnection','down');
+		telegram('Geen verbinding met Domoticz');
+		$output = shell_exec('/var/www/secure/restart_domoticz');
+		telegram($output);
+	}
 }
 
 if($authenticated) {
