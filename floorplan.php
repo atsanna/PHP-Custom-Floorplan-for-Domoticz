@@ -1,61 +1,66 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
 <head><title>Floorplan</title>
-<meta http-equiv="refresh" content="30;floorplan.php" ><meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
 <meta name="HandheldFriendly" content="true" /><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="viewport" content="width=device-width,height=device-height,user-scalable=yes,minimal-ui" />
 <link rel="icon" type="image/png" href="images/domoticzphp48.png">
-<link rel="shortcut icon" href="images/domoticzphp48.png" />
+<link rel="shortcut icon" href="images/domoticzphp48.png" /><link rel="apple-touch-startup-image" href="images/domoticzphp450.png">
 <link rel="apple-touch-icon" href="images/domoticzphp48.png" />
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="images/domoticzphp48.png">
+<meta name="msapplication-config" content="browserconfig.xml">
+<meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
 <link href="floorplan.css" rel="stylesheet" type="text/css" />
 </head><body>
-<?php $start = microtime(true);$time=time();$offline=$time-300;$eendag=$time-82800;include "secure/functions.php";
+<?php $start=microtime(true);$time=$_SERVER['REQUEST_TIME'];$offline=$time-300;$eendag=$time-82800;include "secure/functions.php";
 if($authenticated){
-$schakelen = true;
-if(isset($_POST['Schakel'])){
-	if($_POST['Schakel']==6 || $_POST['Schakel']==48){
-		if($SwitchAchterdeur=='Open'){$schakelen=false;echo '<script language="javascript">alert("WARNING:Achterdeur open!")</script>';}
-		if($Switchpoort=='Open'){$schakelen=false;echo '<script language="javascript">alert("WARNING:Poort open!")</script>';}}
-	if($schakelen==true){if(Schakel($_POST['Schakel'],$_POST['Actie'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>';}}
-else if(isset($_POST['Setpoint'])){foreach($_POST as $key => $value){$value = round($value,0);if(substr($key,0,5)=="Actie"){if(Udevice($_POST['Setpoint'],0,$value)=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$value.'<br/>ERROR</div>';}}}
-else if(isset($_POST['Udevice'])){if(Udevice($_POST['Udevice'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>';}
-else if(isset($_POST['dimlevelEettafel'])){if(Dim(163,$_POST['dimlevelEettafel'])=='ERROR') echo '<div id="message" class="balloon">Dimmer eettafel level '.$_POST['dimlevelEettafel'].'<br/>ERROR</div>';}
-else if(isset($_POST['dimlevelZithoek'])){if(Dim(159,$_POST['dimlevelZithoek'])=='ERROR') echo '<div id="message" class="balloon">Dimmer eettafel level '.$_POST['dimlevelEettafel'].'<br/>ERROR</div>';}
-else if(isset($_POST['Scene'])){if(Scene($_POST['Scene'])=='ERROR') echo '<div id="message" class="balloon">Scene '.$_POST['Naam'].' activeren'.'<br/>ERROR</div>';}
-if(isset($_POST['denon'])){$denon_address = 'http://192.168.0.2';$ctx = stream_context_create(array('http'=>array('timeout' => 2,)));
-	$denonmain = simplexml_load_string(file_get_contents($denon_address.'/goform/formMainZone_MainZoneXml.xml?_='.$time,false,$ctx));
-	$denonmain = json_encode($denonmain);$denonmain = json_decode($denonmain,TRUE);usleep(10000);
-	if($denonmain){
-		$denonmain['MasterVolume']['value']=='--' ? $setvalue = -80 :$setvalue = $denonmain['MasterVolume']['value'];
-		$_POST['denon']=='up' ? $setvalue = $setvalue+3 :$setvalue = $setvalue-3;
-		if($setvalue > -10) $setvalue = -10;if($setvalue < -80) $setvalue = -80;
-		file_get_contents($denon_address.'/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/'.$setvalue.'.0');
+if(isset($_POST['Schakel'])){if(Schakel($_POST['Schakel'],$_POST['Actie'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>';if($_POST['Schakel']==572){xcache_set('Heating',2);}}
+else if(isset($_POST['Setpoint'])){foreach($_POST as $key=>$value){$value=round($value,0);if(substr($key,0,5)=="Actie"){if(Udevice($_POST['Setpoint'],0,$value)=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$value.'<br/>ERROR</div>';else xcache_set('setpoint'.$_POST['Setpoint'],2);}}}
+else if(isset($_POST['Udevice'])){if(Udevice($_POST['Udevice'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>'; }
+else if(isset($_POST['dimmer'])){
+	if(isset($_POST['dimlevelon_x'])) {if(Dim($_POST['dimmer'],100)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
+	else if(isset($_POST['dimleveloff_x'])) {if(Dim($_POST['dimmer'],0)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
+	else if(isset($_POST['dimsleep_x'])) {xcache_set('dimsleep'.$_POST['Naam'],$_POST['dimlevel']);}
+	else {if(Dim($_POST['dimmer'],$_POST['dimlevel'])=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
 	}
-}
-$domoticz = file_get_contents($domoticzurl.'type=devices&filter=all&used=true&plan=2');$domotime = microtime(true) - $start;$domoticz = json_decode($domoticz,true);
+else if(isset($_POST['Scene'])){if(Scene($_POST['Scene'])=='ERROR') echo '<div id="message" class="balloon">Scene '.$_POST['Naam'].' activeren'.'<br/>ERROR</div>';if($_POST['Scene']==5) xcache_set('dimtimeEettafel',$time);}
+if(isset($_POST['denon'])){$denon_address='http://192.168.0.2';$ctx=stream_context_create(array('http'=>array('timeout'=>2,)));
+	$denonmain=simplexml_load_string(file_get_contents($denon_address.'/goform/formMainZone_MainZoneXml.xml?_='.$time,false,$ctx));
+	$denonmain=json_encode($denonmain);$denonmain=json_decode($denonmain,TRUE);usleep(10000);
+	if($denonmain){
+		$denonmain['MasterVolume']['value']=='--'?$setvalue=-80:$setvalue=$denonmain['MasterVolume']['value'];
+		$_POST['denon']=='up'?$setvalue=$setvalue+3:$setvalue=$setvalue-3;
+		if($setvalue>-10) $setvalue=-10;if($setvalue<-80) $setvalue=-80;
+		file_get_contents($denon_address.'/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/'.$setvalue.'.0');}}
+$domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&filter=all&used=true&plan=2'),true);$domotime=microtime(true)-$start;
 if($domoticz){
-	foreach($domoticz['result'] as $dom){
+	foreach($domoticz['result'] as $dom) {
 		(isset($dom['Type'])?$Type=$dom['Type']:$Type='None');
 		(isset($dom['SwitchType'])?$SwitchType=$dom['SwitchType']:$SwitchType='None');
 		(isset($dom['SubType'])?$SubType=$dom['SubType']:$SubType='None');
-		$name=str_replace(' ','_',$dom['Name']);$name=str_replace('/','_',$name);
-		if($Type=='Temp + Humidity'||$Type=='Temp'){${'Temp'.$name}=$dom['Temp'];${'Tempidx'.$name}=$dom['idx'];${'Tempbat'.$name}=$dom['BatteryLevel'];${'TempTime'.$name}=strtotime($dom['LastUpdate']);}
-		else if($SwitchType=='Dimmer'){${'Dimmeridx'.$name} = $dom['idx'];$dom['Status']=='Off' ? ${'Dimmer'.$name} = 'Off':${'Dimmer'.$name} = 'On';$dom['Status']=='Off' ? ${'Dimmerlevel'.$name} = 0:${'Dimmerlevel'.$name} = $dom['Level'];${'DimmerTime'.$name} = strtotime($dom['LastUpdate']);}
-		else if($Type=='Rain'){${'Rainidx'.$name} = $dom['idx'];${'Rain'.$name} = $dom['Rain'];${'Rainbat'.$name} = $dom['BatteryLevel'];${'RainTime'.$name} = strtotime($dom['LastUpdate']);}
-		else if($Type=='General' && $dom['SubType']=='Text'){${'Textidx'.$name} = $dom['idx'];${'Text'.$name} = $dom['Data'];${'TextTime'.$name} = strtotime($dom['LastUpdate']);}
-		else if($Type=='Usage' && $dom['SubType']=='Electric'){${'Poweridx'.$name} = $dom['idx'];${'Power'.$name} = substr($dom['Data'],0,-5);${'PowerTime'.$name} = strtotime($dom['LastUpdate']);}
-		else if($Type=='Scene' || $Type=='Group' || $Type=='Wind'){}
-		else if($Type=='Radiator 1' || $Type=='Thermostat'){${'Radidx'.$name} = $dom['idx'];${'Rad'.$name} = $dom['Data'];${'RadTime'.$name} = strtotime($dom['LastUpdate']);${'Radbat'.$name} = $dom['BatteryLevel'];}
-		else {if(substr($dom['Data'],0,2)=='On'){${'Switch'.$name} = 'On';}
-			else if(substr($dom['Data'],0,3)=='Off'){${'Switch'.$name} = 'Off';}
-			else if(substr($dom['Data'],0,4)=='Open'){${'Switch'.$name} = 'Open';}
-			else {${'Switch'.$name} = $dom['Data'];}
-			${'Switchidx'.$name} = $dom['idx'];${'SwitchTime'.$name} = strtotime($dom['LastUpdate']);${'Switchbat'.$name} = $dom['BatteryLevel'];}
+		$name=$dom['Name'];
+		if($Type=='Temp + Humidity'||$Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];${'TB'.$name}=$dom['BatteryLevel'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
+		else if($SwitchType=='Dimmer'){${'DI'.$name}=$dom['idx'];$dom['Status']=='Off'?${'D'.$name}='Off':${'D'.$name}='On';$dom['Status']=='Off'?${'Dlevel'.$name}=0:${'Dlevel'.$name}=$dom['Level'];${'DT'.$name}=strtotime($dom['LastUpdate']);}
+		else if($Type=='Rain') $Regen=$dom['Rain'];
+		else if($Type=='Usage'&&$dom['SubType']=='Electric') ${'P'.$name}=substr($dom['Data'],0,-5);
+		else if($Type=='Radiator 1'||$Type=='Thermostat') {${'RI'.$name}=$dom['idx'];${'R'.$name}=$dom['Data'];${'RT'.$name}=strtotime($dom['LastUpdate']);${'RB'.$name}=$dom['BatteryLevel'];}
+		else {
+			if(substr($dom['Data'],0,2)=='On') ${'S'.$name}='On';
+			else if(substr($dom['Data'],0,3)=='Off') ${'S'.$name}='Off';
+			else if(substr($dom['Data'],0,4)=='Open') ${'S'.$name}='Open';
+			else ${'S'.$name}=$dom['Data'];${'SI'.$name}=$dom['idx'];${'ST'.$name}=strtotime($dom['LastUpdate']);${'SB'.$name}=$dom['BatteryLevel'];}
 	}
-
+	unset($domoticz,$dom);
+if(isset($_POST['Schakel'])){
+	if($_POST['Schakel']==6||$_POST['Schakel']==48){
+		if($SRaamLiving=='Open') echo '<script language="javascript">alert("WARNING:Raam living open!")</script>';
+		if($SAchterdeur=='Open') echo '<script language="javascript">alert("WARNING:Achterdeur open!")</script>';
+		if($Spoort=='Open') echo '<script language="javascript">alert("WARNING:Poort open!")</script>';}}
 echo '<div style="position:absolute;top:5px;left:237px;width:180px;"><a href="" style="padding:12px 42px;font-size:33px;font-weight:500;">'.strftime("%k:%M:%S",$time).'</a></div>
 <div class="box" style="top:0px;height:306px;" >
-<div class="box2" style="top:255px;left:12px;" onclick="location.href=\'rain.php\'"><img src="images/rain.png"/ title="'.strftime("%a %e %b %k:%M:%S",$RainTimeRegen).'" style="cursor:pointer" onclick="location.href=\'rain.php\'"></div>
-<div class="box2" style="top:290px;left:13px;background:rgba(222,222,222,0.8);" onclick="location.href=\'rain.php\'">'.$RainRegen.' / '.$TextBuienradar.'</div></div>
+<div class="box2" style="top:240px;left:11px;" ><img src="images/'.xcache_get('weatherimg').'.png"/ width="60px" height="auto"></div>
+<div class="box2" style="top:290px;left:13px;background:rgba(222,222,222,0.8);" >'.xcache_get('averagerain').'</div>
 <div class="box" style="top:319px;height:505px;">
 <form method="POST"><input type="hidden" name="denon" value="up"><input type="image" src="images/arrowup.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="denon" value="down"><input type="image" src="images/arrowdown.png" width="48px" height="48px"></form>
@@ -64,7 +69,6 @@ echo '<div style="position:absolute;top:5px;left:237px;width:180px;"><a href="" 
 <br/><form method="POST"><input type="hidden" name="Scene" value="3"><input type="hidden" name="Naam" value="TV Kijken"><input type="image" src="images/TV_On.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="Scene" value="4"><input type="hidden" name="Naam" value="Kodi kijken"><input type="image" src="images/kodi.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="Scene" value="5"><input type="hidden" name="Naam" value="Eten"><input type="image" src="images/eten.png" width="48px" height="48px"></form>
-<br/><form method="POST"><input type="hidden" name="Scene" value="1"><input type="hidden" name="Naam" value="Alles uit"><input type="image" src="images/allesuit.png" width="48px" height="48px"></form>
 </div>';
 Dimmer('Zithoek',48,115,125);
 Dimmer('Eettafel',48,115,269);
@@ -85,53 +89,64 @@ Schakelaar('Terras','Light',48,77,15);
 Schakelaar('Brander','Fire',48,765,260);
 Schakelaar('Licht_Zolder','Light',48,705,260);
 Schakelaar('Bureel_Tobi','Plug',36,780,380);
-Smokedetector('SD_Hall_General',36,434,218);
-Smokedetector('SD_Zolder_General',36,710,320);
+Schakelaar('Heating','Fire',48,778,16);
+Smokedetector('SD_Zolder_Smoke',36,710,320);
 Thermometer('Buiten',110,140,17);
 Thermometer('Living',80,141,225);
 Thermometer('Badkamer',70,426,435);
-Thermometer('Slaapkamer',70,568,435);
-Thermometer('Slaapkamer_Tobi',70,458,135);
-Thermometer('Slaapkamer_Tobi',70,568,135);
-Thermometer('SD_Hall_Temperatuur',60,470,224);
-Thermometer('SD_Zolder_Temperatuur',60,707,160);
+//Thermometer('Kamer',70,568,435);
+Thermometer('KamerTobi',70,458,140);
+Thermometer('KamerJulius',70,568,140);
+//Thermometer('SD_Hall_Temperatuur',60,470,224);
+Thermometer('Zolder',70,707,135);
 Setpoint('Living',48,160,172);
 Setpoint('Badkamer',40,436,385);
-Setpoint('Slaapkamer',40,579,385);
-Setpoint('Slaapkamer_Tobi',40,469,90);
-Setpoint('Slaapkamer_Tobi',40,579,90);
+//Setpoint('Kamer',40,579,385);
+Setpoint('KamerTobi',40,469,100);
+Setpoint('KamerJulius',40,579,100);
 Radiator('LivingZE',90,160,310);
 Radiator('LivingZZ',-90,221,76);
 Radiator('BadkamerZ',0,403,349);
-if($SwitchThuis=='Off' || $SwitchSlapen=='On'){Secured(52,88,250,196);Secured(50,345,129,57);Secured(255,88,316,141);}
-if($SwitchThuis=='Off'){Secured(404,212,129,65);Secured(469,214,45,66);}
-if($SwitchPIR_Living != 'Off') Motion(52,88,250,196);
-if($SwitchPIR_Inkom  != 'Off') Motion(50,345,129,57);
-if($SwitchPIR_Garage  != 'Off') Motion(255,88,316,141);
-if($SwitchPIR_Hall  != 'Off'){Motion(404,212,129,65);Motion(469,214,45,66);}
-if($SwitchTimeDeurbel>$eendag) Timestamp('Deurbel',-90,17,456);
-if($SwitchTimePIR_Garage>$eendag) Timestamp('PIR_Garage',0,255,223);
-if($SwitchTimePIR_Living>$eendag) Timestamp('PIR_Living',0,233,223);
-if($SwitchTimePIR_Inkom>$eendag) Timestamp('PIR_Inkom',0,40,360);
-if($SwitchTimePIR_Hall>$eendag) Timestamp('PIR_Hall',0,403,215);
-if($SwitchTimeAchterdeur>$eendag) Timestamp('Achterdeur',-90,280,79);
-if($SwitchTimepoort>$eendag) Timestamp('poort',90,315,377);
-if($SwitchTimeBrander>$eendag) Timestamp('Brander',0,812,265);
-if($SwitchTimeLicht_Zolder>$eendag) Timestamp('Licht_Zolder',0,688,266);
-if($SwitchTimeBureel_Tobi>$eendag) Timestamp('Bureel_Tobi',0,782,433);
-if($Switchpoort != 'Closed') echo '<div style="position:absolute;top:262px;left:404px;width:25px;height:128px;background:rgba(255,0,0,1);z-index:-10;"></div>';
-if($SwitchAchterdeur != 'Closed') echo '<div style="position:absolute;top:264px;left:81px;width:30px;height:48px;background:rgba(255,0,0,1);z-index:-10;"></div>';
-if($SwitchBureel_Tobi!='Off') echo'<div style="position:absolute;top:18px;left:56px;width:50px;cursor:pointer;text-align:center;">'.$PowerP_Bureel_Tobi.'</div>';
-$execution= microtime(true) - $start;
-$phptime = $execution - $domotime;
-echo '<div style="position:absolute;top:840px;left:4px;width:500px;text-align:left;" id="cpuinfo">
-<font color="#CCCCCC">CPU '.$SwitchCPU_Usage.' - Memory '.$SwitchMemory_Usage.' - SD '.$SwitchHDD__.' - '.$TempInternal_Temperature.'°C<br/>'.shell_exec('uptime').'<br/>
-Domoticz: '.round($domotime,6).' - PHP: '.round($phptime,6).' - Total: '.round($execution,6).'</font></div>';
+Radiator('KamerTobiZ',-90,463,76); //tobi
+Radiator('KamerJuliusZ',-90,583,76); //julius
+//Radiator('KamerZ',90,542,453); //kamer
+
+if($SThuis=='Off'||$SSlapen=='On'){Secured(52,88,250,196);Secured(50,345,129,57);Secured(255,88,316,141);}
+if($SThuis=='Off'){Secured(404,212,129,65);Secured(469,214,45,66);}
+if($SPIR_Living!='Off') Motion(52,88,250,196);
+if($SPIR_Inkom!='Off') Motion(50,345,129,57);
+if($SPIR_Garage!='Off') Motion(255,88,316,141);
+if($SPIR_Hall!='Off'){Motion(404,212,129,65);Motion(469,214,45,66);}
+if($STDeurbel>$eendag) Timestamp('Deurbel',-90,17,456);
+if($STPIR_Garage>$eendag) Timestamp('PIR_Garage',0,255,223);
+if($STPIR_Living>$eendag) Timestamp('PIR_Living',0,233,223);
+if($STPIR_Inkom>$eendag) Timestamp('PIR_Inkom',0,40,360);
+if($STPIR_Hall>$eendag) Timestamp('PIR_Hall',0,403,215);
+if($STAchterdeur>$eendag) Timestamp('Achterdeur',-90,280,79);
+if($STpoort>$eendag) Timestamp('poort',90,315,377);
+if($STBrander>$eendag) Timestamp('Brander',0,812,265);
+if($STLicht_Zolder>$eendag) Timestamp('Licht_Zolder',0,688,266);
+if($STBureel_Tobi>$eendag) Timestamp('Bureel_Tobi',0,782,433);
+if($Spoort!='Closed') echo '<div style="position:absolute;top:262px;left:404px;width:25px;height:128px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SAchterdeur!='Closed') echo '<div style="position:absolute;top:264px;left:81px;width:30px;height:48px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SRaamLiving!='Closed') echo '<div style="position:absolute;top:46px;left:81px;width:8px;height:165px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SRaamKamerTobi!='Closed') echo '<div style="position:absolute;top:449px;left:81px;width:7px;height:43px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SRaamKamerJulius!='Closed') echo '<div style="position:absolute;top:569px;left:81px;width:7px;height:43px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SRaamKamer!='Closed') echo '<div style="position:absolute;top:586px;left:481px;width:7px;height:43px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SDeurBadkamer!='Closed') echo '<div style="position:absolute;top:421px;left:341px;width:7px;height:46px;background:rgba(255,0,0,1);z-index:-10;"></div>';
+if($SBureel_Tobi!='Off') echo'<div style="position:absolute;top:800px;left:425px;width:50px;cursor:pointer;text-align:center;">'.$PP_Bureel_Tobi.'</div>';
+
+
+$execution= microtime(true)-$start;
+$phptime=$execution-$domotime;
+echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:left;font-size:12px" >
+'.$TInternal_Temperature.'°C|'.$SCPU_Usage.'|'.$SMemory_Usage.'M|D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'<br/></div>';
+
 } else echo '<div style="background:#ddd;"><a href="">Geen verbinding met Domoticz</a></div>';	
 } else {header("Location:index.php");die("Redirecting to:index.php");}
 ?>
 <script type="text/javascript">
-function toggle_visibility(id){var e = document.getElementById(id);if(e.style.display=='inherit') e.style.display = 'none';else e.style.display = 'inherit';}
-setTimeout('window.location.href=window.location.href;',4880);
+function toggle_visibility(id){var e=document.getElementById(id);if(e.style.display=='inherit') e.style.display='none';else e.style.display='inherit';}
+setTimeout('window.location.href=window.location.href;',9850);
 </script>
 </body></html>
