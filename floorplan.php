@@ -33,18 +33,17 @@ if(isset($_POST['denon'])){$denon_address='http://192.168.0.2';$ctx=stream_conte
 		$_POST['denon']=='up'?$setvalue=$setvalue+3:$setvalue=$setvalue-3;
 		if($setvalue>-10) $setvalue=-10;if($setvalue<-80) $setvalue=-80;
 		file_get_contents($denon_address.'/MainZone/index.put.asp?cmd0=PutMasterVolumeSet/'.$setvalue.'.0');}}
-$domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&filter=all&used=true&plan=2'),true);$domotime=microtime(true)-$start;
+$domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&used=true&plan=2'),true);$domotime=microtime(true)-$start;
 if($domoticz){
 	foreach($domoticz['result'] as $dom) {
 		(isset($dom['Type'])?$Type=$dom['Type']:$Type='None');
 		(isset($dom['SwitchType'])?$SwitchType=$dom['SwitchType']:$SwitchType='None');
 		(isset($dom['SubType'])?$SubType=$dom['SubType']:$SubType='None');
 		$name=$dom['Name'];
-		if($Type=='Temp + Humidity'||$Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];${'TB'.$name}=$dom['BatteryLevel'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
+		if($Type=='Temp + Humidity'||$Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
 		else if($SwitchType=='Dimmer'){${'DI'.$name}=$dom['idx'];$dom['Status']=='Off'?${'D'.$name}='Off':${'D'.$name}='On';$dom['Status']=='Off'?${'Dlevel'.$name}=0:${'Dlevel'.$name}=$dom['Level'];${'DT'.$name}=strtotime($dom['LastUpdate']);}
-		else if($Type=='Rain') $Regen=$dom['Rain'];
 		else if($Type=='Usage'&&$dom['SubType']=='Electric') ${'P'.$name}=substr($dom['Data'],0,-5);
-		else if($Type=='Radiator 1'||$Type=='Thermostat') {${'RI'.$name}=$dom['idx'];${'R'.$name}=$dom['Data'];${'RT'.$name}=strtotime($dom['LastUpdate']);${'RB'.$name}=$dom['BatteryLevel'];}
+		else if($Type=='Radiator 1'||$Type=='Thermostat') {${'RI'.$name}=$dom['idx'];${'R'.$name}=$dom['Data'];${'RT'.$name}=strtotime($dom['LastUpdate']);}
 		else {
 			if(substr($dom['Data'],0,2)=='On') ${'S'.$name}='On';
 			else if(substr($dom['Data'],0,3)=='Off') ${'S'.$name}='Off';
@@ -57,7 +56,7 @@ if(isset($_POST['Schakel'])){
 		if($SRaamLiving=='Open') echo '<script language="javascript">alert("WARNING:Raam living open!")</script>';
 		if($SAchterdeur=='Open') echo '<script language="javascript">alert("WARNING:Achterdeur open!")</script>';
 		if($Spoort=='Open') echo '<script language="javascript">alert("WARNING:Poort open!")</script>';}}
-echo '<div style="position:absolute;top:5px;left:237px;width:180px;"><a href="" style="padding:12px 42px;font-size:33px;font-weight:500;">'.strftime("%k:%M:%S",$time).'</a></div>
+echo '<div style="position:absolute;top:5px;left:278px;width:130px;text-align:right;"><a href="" style="padding:4px 4px;font-size:33px;font-weight:500;text-align:right;letter-spacing:-2px" title="refresh">'.strftime("%k:%M:%S",$time).'</a></div>
 <div class="box" style="top:0px;height:306px;" >
 <div class="box2" style="top:240px;left:11px;" ><img src="images/'.xcache_get('weatherimg').'.png"/ width="60px" height="auto"></div>
 <div class="box2" style="top:290px;left:13px;background:rgba(222,222,222,0.8);" >'.xcache_get('averagerain').'</div>
@@ -70,18 +69,33 @@ echo '<div style="position:absolute;top:5px;left:237px;width:180px;"><a href="" 
 <br/><form method="POST"><input type="hidden" name="Scene" value="4"><input type="hidden" name="Naam" value="Kodi kijken"><input type="image" src="images/kodi.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="Scene" value="5"><input type="hidden" name="Naam" value="Eten"><input type="image" src="images/eten.png" width="48px" height="48px"></form>
 </div>';
-Dimmer('Zithoek',48,115,125);
-Dimmer('Eettafel',48,115,269);
-Schakelaar('Lamp_Bureel','Light',40,8,209);
-Schakelaar('TV','TV',48,3,92);	
-Schakelaar('Denon','Amp',48,6,154);
+Dimmer('Zithoek',48,125,130);
+Dimmer('Eettafel',48,125,270);
+Schakelaar('TV','TV',48,44,88);	
+Schakelaar('Denon','Amp',48,44,144);
+Schakelaar('Kodi','Kodi',36,50,196);	
+Schakelaar('iMac','imac',40,50,235);	
+Schakelaar('DiskStation','nas',16,28,267);	
+Schakelaar('Kristal','Light',36,8,98);
+Schakelaar('TVLed','Light',36,8,158);
+Schakelaar('Lamp_Bureel','Light',36,8,214);
 Schakelaar('Licht_Inkom','Light',40,60,360);
+Schakelaar('Keuken','Light',48,157,390);
+//Schakelaar('Keuken','Light',30,150,340); //gootsteen
+//Schakelaar('Tuin','Light',30,115,375); //fornuis
+//Schakelaar('Werkblad','Light',30,216,420); //werkblad
+Schakelaar('LichtBadkamer1','Light',40,440,368); //badkamer
+Schakelaar('LichtBadkamer2','Light',20,480,348); //badkamer
+//Schakelaar('Keuken','Light',40,550,350); //kamer
+Schakelaar('Tobi','Light',40,420,131); //kamer Tobi
+//Schakelaar('Keuken','Light',40,575,170); //kamer Julius
 Schakelaar('Licht_Voordeur','Light',40,60,441);
 Schakelaar('Licht_Hall','Light',42,416,252);	
 Schakelaar('Licht_Hall_Auto','Clock',36,420,299);		
-Schakelaar('Licht_Garage','Light',48,305,216);	
-Schakelaar('Licht_Garage_Auto','Clock',36,312,180);	
-Schakelaar('Pluto','Laptop',30,365,266);	
+Schakelaar('Licht_Garage','Light',48,305,209);	
+Schakelaar('ZolderG','Light',30,315,140);	
+Schakelaar('Licht_Garage_Auto','Clock',36,312,299);	
+Schakelaar('Pluto','Laptop',25,370,217);	
 Schakelaar('Thuis','Home',48,268,428);	
 Schakelaar('Slapen','Sleepy',48,335,428);	
 Schakelaar('Meldingen','Alarm',48,5,16);	
@@ -90,26 +104,23 @@ Schakelaar('Brander','Fire',48,765,260);
 Schakelaar('Licht_Zolder','Light',48,705,260);
 Schakelaar('Bureel_Tobi','Plug',36,780,380);
 Schakelaar('Heating','Fire',48,778,16);
-Smokedetector('SD_Zolder_Smoke',36,710,320);
 Thermometer('Buiten',110,140,17);
-Thermometer('Living',80,141,225);
-Thermometer('Badkamer',70,426,435);
-//Thermometer('Kamer',70,568,435);
-Thermometer('KamerTobi',70,458,140);
-Thermometer('KamerJulius',70,568,140);
-//Thermometer('SD_Hall_Temperatuur',60,470,224);
+Thermometer('Living',70,178,232);
+Thermometer('Badkamer',70,432,447);
+Thermometer('Kamer',65,578,447);
+Thermometer('KamerTobi',65,470,137);
+Thermometer('KamerJulius',65,578,137);
 Thermometer('Zolder',70,707,135);
-Setpoint('Living',48,160,172);
-Setpoint('Badkamer',40,436,385);
-//Setpoint('Kamer',40,579,385);
-Setpoint('KamerTobi',40,469,100);
-Setpoint('KamerJulius',40,579,100);
-Radiator('LivingZE',90,160,310);
-Radiator('LivingZZ',-90,221,76);
+Setpoint('Living',40,189,190);
+Setpoint('Badkamer',40,443,405);
+Setpoint('Kamer',40,586,405);
+Setpoint('KamerTobi',40,479,95);
+Setpoint('KamerJulius',40,586,95);
+Radiator('LivingZZ',-90,221,77);
 Radiator('BadkamerZ',0,403,349);
-Radiator('KamerTobiZ',-90,463,76); //tobi
-Radiator('KamerJuliusZ',-90,583,76); //julius
-//Radiator('KamerZ',90,542,453); //kamer
+Radiator('KamerTobiZ',-90,463,77); //tobi
+Radiator('KamerJuliusZ',-90,583,77); //julius
+Radiator('KamerZ',90,542,456); //kamer
 
 if($SThuis=='Off'||$SSlapen=='On'){Secured(52,88,250,196);Secured(50,345,129,57);Secured(255,88,316,141);}
 if($SThuis=='Off'){Secured(404,212,129,65);Secured(469,214,45,66);}
@@ -117,13 +128,13 @@ if($SPIR_Living!='Off') Motion(52,88,250,196);
 if($SPIR_Inkom!='Off') Motion(50,345,129,57);
 if($SPIR_Garage!='Off') Motion(255,88,316,141);
 if($SPIR_Hall!='Off'){Motion(404,212,129,65);Motion(469,214,45,66);}
-if($STDeurbel>$eendag) Timestamp('Deurbel',-90,17,456);
-if($STPIR_Garage>$eendag) Timestamp('PIR_Garage',0,255,223);
-if($STPIR_Living>$eendag) Timestamp('PIR_Living',0,233,223);
-if($STPIR_Inkom>$eendag) Timestamp('PIR_Inkom',0,40,360);
+if($STDeurbel>$eendag) Timestamp('Deurbel',-90,17,462);
+if($STPIR_Garage>$eendag) Timestamp('PIR_Garage',0,255,216);
+if($STPIR_Living>$eendag) Timestamp('PIR_Living',0,233,120);
+if($STPIR_Inkom>$eendag) Timestamp('PIR_Inkom',0,92,395);
 if($STPIR_Hall>$eendag) Timestamp('PIR_Hall',0,403,215);
 if($STAchterdeur>$eendag) Timestamp('Achterdeur',-90,280,79);
-if($STpoort>$eendag) Timestamp('poort',90,315,377);
+if($STpoort>$eendag) Timestamp('poort',90,315,381);
 if($STBrander>$eendag) Timestamp('Brander',0,812,265);
 if($STLicht_Zolder>$eendag) Timestamp('Licht_Zolder',0,688,266);
 if($STBureel_Tobi>$eendag) Timestamp('Bureel_Tobi',0,782,433);
@@ -147,6 +158,6 @@ echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:l
 ?>
 <script type="text/javascript">
 function toggle_visibility(id){var e=document.getElementById(id);if(e.style.display=='inherit') e.style.display='none';else e.style.display='inherit';}
-setTimeout('window.location.href=window.location.href;',9850);
+setTimeout('window.location.href=window.location.href;',5850);
 </script>
 </body></html>

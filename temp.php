@@ -6,21 +6,27 @@ if($authenticated == true) {
 	
 	$dbd = new SQLite3('/home/pi/domoticz/domoticz.db');
 	if(isset($_POST['sensor'])) { $sensor = $_POST['sensor']; $sensornaam = $_POST['naam'];} 
+	else {$sensor = 38; $sensornaam = 'Living';}
 	echo '<div class="isotope">';
 	switch($sensor) {
-		case 37:
-			$setpoint = 138;
-			break;
-		default:
-			$setpoint = 0;
-			break;
+		case 329:$setpoint = 549;break;//Slaapkamer Julius
+		case 541:$setpoint = 548;break;//Slaapkamer Tobi
+		case 543:$setpoint = 130;break;//Living
+		case 566:$setpoint = 111;break;//Badkamer
+		case 582:$setpoint = 97;break;//Kamer
+		default:$setpoint = 0;break;
 	}
 	if($setpoint>0) {
-		$sql = "SELECT Date, Temperature FROM Temperature WHERE DeviceRowID = $sensor ORDER BY Date DESC";
+		$sql = "
+			SELECT t.Date, t.Temperature as Temperature, s.Temperature as Setpoint 
+			FROM Temperature t 
+			JOIN Temperature s ON t.Date = s.Date
+			WHERE t.DeviceRowID = $sensor AND s.DeviceRowID = $setpoint
+			ORDER BY t.Date DESC";
 		if(!$result = $dbd->query($sql)){ echo('There was an error running the query [' . $dbd->error . ']');}
 		$times = array();
 		while($row = $result->fetchArray()){
-			array_push($times, array('Date' => $row['Date'], 'Temperature' => $row['Temperature']));
+			array_push($times, array('Date' => $row['Date'], 'Temperature' => $row['Temperature'], 'Setpoint' => $row['Setpoint']));
 		}
 	} else {
 		$sql = "SELECT Date, Temperature FROM Temperature WHERE DeviceRowID = $sensor ORDER BY Date DESC";
@@ -46,29 +52,22 @@ if($authenticated == true) {
 	}
 	$maanden = array_reverse($maanden);
 		
-		//GRAPHS
-		//Nieuwe array voor times om vochtigheid eruit te halen.
-		//foreach ($timeschart as $i => $item) {
- 		//   foreach ($item as $key => $value) {
-    	//    if (!in_array($key,array('Date','Temperature'))) { unset($timeschart[$i][$key]); }
-    	//	}
-		//}
-	echo '<div class="item temprain gradient" style="min-width:315px"><h2>'.$_POST['naam'].'</h2>';
-	$args = array('chart'=>'AreaChart','width'=>465,'height'=>300,'hide_legend'=>true,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'times','margins'=>array(30,10,15,35),);
+	echo '<div class="item temprain gradient" style="min-width:315px"><h2>'.$sensor.' - '.$sensornaam.'</h2>';
+	$args = array('chart'=>'AreaChart','width'=>464,'height'=>650,'hide_legend'=>false,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'times','margins'=>array(30,10,15,35),);
 	$chart = array_to_chart($timeschart,$args);
 	echo $chart['script'];
 	echo $chart['div'];
 	echo "</div>";
 
 	echo "<div class='item temprain gradient' style='min-width:315px'><h2>Laatste 30 dagen</h2>";
-	$args = array('chart'=>'AreaChart','width'=>465,'height'=>300,'hide_legend'=>true,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'dagen','margins'=>array(30,10,15,35),);
+	$args = array('chart'=>'AreaChart','width'=>464,'height'=>650,'hide_legend'=>true,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'dagen','margins'=>array(30,10,15,35),);
 	$chart = array_to_chart($dagen,$args);
 	echo $chart['script'];
 	echo $chart['div'];
 	echo "</div>";
 	
 	echo "<div class='item temprain gradient' style='min-width:315px'><h2>Per maanden</h2>";
-	$args = array('chart'=>'AreaChart','width'=>465,'height'=>300,'hide_legend'=>true,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'maanden','margins'=>array(30,10,15,35),);
+	$args = array('chart'=>'AreaChart','width'=>464,'height'=>650,'hide_legend'=>true,'responsive'=>true,'background_color'=>'#E5E5E5','chart_div'=>'maanden','margins'=>array(30,10,15,35),);
 	$chart = array_to_chart($maanden,$args);
 	echo $chart['script'];
 	echo $chart['div'];

@@ -28,13 +28,13 @@ h2{font-size:12px}
 <body>
 <?php
 $denon_address = 'http://192.168.0.2';
-
+if(isset($_COOKIE["HomeEgregius"])) {
 if(isset($_POST['action'])) {
 	file_get_contents($denon_address.'/'.$_POST['action']);
 	if(substr($_POST['action'],28,15) == 'PutSurroundMode' || substr($_POST['action'],28,15) == 'PutZone_InputFu') {
-		usleep(700000);
+	usleep(700000);
 	} else {
-		usleep(70000);
+	usleep(70000);
 	}
 }
 
@@ -49,6 +49,9 @@ if(isset($_POST['action'])) {
 	if(!$denonmain) echo '<div class="error">Kon geen verbinding maken met Denon op '.$denon_address.'<br/>Geen real-time info beschikbaar</div>';
     else $live = true;
     ?>
+    <div>
+    <a href="floorplan.php" class="abutton home gradient" style="padding:5px 0px 5px 0px; margin-bottom:5px;width:100%;">Floorplan</a><br />
+  	</div>
     <form method="POST">
        	
     <div class="column">
@@ -75,7 +78,8 @@ if(isset($_POST['action'])) {
             <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/TUNER" class="abutton settings gradient">Tuner</button>
             <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/SAT/CBL" class="abutton settings gradient">TV</button>
             <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/DVD" class="abutton settings gradient">Kodi</button>
-            <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/IRADIO&cmd1=aspMainZone_WebUpdateStatus/&cmd2=PutNetAudioCommand/CurRight&ZoneName=MAIN+ZONE" class="abutton settings gradient">iRadio</button>
+            <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/TV" class="abutton settings gradient">iMac</button>
+            <!-- <button name="action" value="MainZone/index.put.asp?cmd0=PutZone_InputFunction/IRADIO&cmd1=aspMainZone_WebUpdateStatus/&cmd2=PutNetAudioCommand/CurRight&ZoneName=MAIN+ZONE" class="abutton settings gradient">iRadio</button> -->
         <?php } ?>
         <table width="100%" align="center">
             <tr>
@@ -199,6 +203,17 @@ if(isset($_POST['action'])) {
     </div>
     </div>
     </form>
+    <div style="clear:both">
+    <a href="index.php"  class="abutton settings gradient">Home</a>
+    </div>
    </body>
  </html>
- 
+    
+<?php
+
+} else
+        {
+            echo("Login Failed.");
+            header("Location: index.php");
+            die("Redirecting to: index.php");
+        }

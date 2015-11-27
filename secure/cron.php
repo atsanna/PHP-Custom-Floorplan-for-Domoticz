@@ -3,19 +3,17 @@ $authenticated=false;
 include "functions.php";
 if($authenticated) {error_reporting(E_ALL);ini_set("display_errors", "on");}
 $time=$_SERVER['REQUEST_TIME'];$timeout=$time-170;
-$domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&filter=all&used=true&plan=3'),true);
+$domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&used=true'),true);
 if($domoticz) {
 	foreach($domoticz['result'] as $dom) {
 		isset($dom['Type'])?$Type=$dom['Type']:$Type='None';
 		isset($dom['SwitchType'])?$SwitchType=$dom['SwitchType']:$SwitchType='None';
 		isset($dom['SubType'])?$SubType=$dom['SubType']:$SubType='None';
 		$name=$dom['Name'];
-		if($Type=='Temp + Humidity'||$Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];$dom['BatteryLevel']>100?${'TB'.$name}=100:${'TB'.$name}=$dom['BatteryLevel'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
+		if($Type=='Temp + Humidity'||$Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
 		else if($SwitchType=='Dimmer'){${'DI'.$name}=$dom['idx'];$dom['Status']=='Off'?${'D'.$name}='Off':${'D'.$name}='On';$dom['Status']=='Off'?${'Dlevel'.$name}=0:${'Dlevel'.$name}=$dom['Level'];${'DT'.$name}=strtotime($dom['LastUpdate']);}
-		else if($dom['HardwareName']=='Kodi') {$Kodi=$dom;}
-		else if($Type=='Rain') $Regen=$dom['Rain'];
 		else if($Type=='Usage'&&$dom['SubType']=='Electric') ${'P'.$name}=substr($dom['Data'],0,-5);
-		else if($Type=='Radiator 1'||$Type=='Thermostat') {${'RI'.$name}=$dom['idx'];${'R'.$name}=$dom['Data'];${'RT'.$name}=strtotime($dom['LastUpdate']);$dom['BatteryLevel']>100?${'RB'.$name}=100:${'RB'.$name}=$dom['BatteryLevel'];}
+		else if($Type=='Radiator 1'||$Type=='Thermostat') {${'RI'.$name}=$dom['idx'];${'R'.$name}=$dom['Data'];${'RT'.$name}=strtotime($dom['LastUpdate']);}
 		else {
 			if(substr($dom['Data'],0,2)=='On') ${'S'.$name}='On';
 			else if(substr($dom['Data'],0,3)=='Off') ${'S'.$name}='Off';
@@ -23,7 +21,6 @@ if($domoticz) {
 			else ${'S'.$name}=$dom['Data'];
 			${'SI'.$name}=$dom['idx'];
 			${'ST'.$name}=strtotime($dom['LastUpdate']);
-			$dom['BatteryLevel']>100?${'SB'.$name}=100:${'SB'.$name}=$dom['BatteryLevel'];
 		}
 	}
 	if(xcache_get('domoticzconnection')>0) {xcache_set('domoticzconnection',0);telegram('Verbinding met Domoticz hersteld');}
@@ -33,14 +30,16 @@ if($domoticz) {
 	unset($domoticz,$dom);
 	
 	//Automatische lichten inschakelen
-	if(($SPIR_Garage!='Off'||$Spoort!='Closed')&&$SLicht_Garage=='Off'&&$SLicht_Garage_Auto=='On') Schakel($SILicht_Garage, 'On');
-	if($SPIR_Inkom!='Off'&&$SLicht_Inkom=='Off'&&$SLicht_Hall_Auto=='On') ($SSlapen=="Off") ?Scene(6):Schakel($SILicht_Inkom, 'On');
-	if($SPIR_Hall!='Off'&&($SLicht_Hall=='Off'||$SLicht_Inkom=='Off')&&$SLicht_Hall_Auto=='On') ($SSlapen=="Off") ?Scene(6):Schakel($SILicht_Inkom, 'On');
-	if($SPIR_Living!='Off'&&$STV=='Off'&&$SDenon=='Off'&&$SLamp_Bureel=='Off'&&$SLicht_Hall_Auto=='On'&&$DEettafel=='Off'&&$SSlapen=="Off") Dim($DIEettafel, 40);
+	if(($SPIR_Garage!='Off'||$Spoort!='Closed')&&$SLicht_Garage=='Off'&&$SLicht_Garage_Auto=='On'&&$SThuis=='On'&&$SSlapen=='Off') Schakel($SILicht_Garage, 'On');
+	if($SPIR_Inkom!='Off'&&$SLicht_Inkom=='Off'&&$SLicht_Hall_Auto=='On') if($SSlapen=="Off") {Schakel($SILicht_Inkom, 'On');Schakel($SILicht_Hall, 'On');} else Schakel($SILicht_Inkom, 'On');
+	if($SPIR_Hall!='Off'&&($SLicht_Hall=='Off'||$SLicht_Inkom=='Off')&&$SLicht_Hall_Auto=='On') if($SSlapen=="Off") {Schakel($SILicht_Hall, 'On');Schakel($SILicht_Inkom, 'On');} else Schakel($SILicht_Inkom, 'On');
+	if($SPIR_Living!='Off'&&$STV=='Off'&&$SDenon=='Off'&&$SLamp_Bureel=='Off'&&$SLicht_Hall_Auto=='On'&&$DEettafel=='Off'&&$SSlapen=="Off"&&$SThuis=='On') {
+		Dim($DIEettafel, 31);Schakel($SIKeuken, 'On');
+		if($time > strtotime('6:00') && $time < strtotime('7:15') && $SiMac=='Off') {Schakel($SIiMac, 'On');Schakel($SILamp_Bureel, 'On');}
+	}
 	
 	//Meldingen
 	$deurbel=false;
-	if($SMeldingen!='On' && $STMeldingen<$time-43200) Schakel($SIMeldingen, 'On');
 	if(($SThuis=='Off'||$SSlapen=='On') && $STThuis<$timeout && $SMeldingen=='On') {
 		if($Spoort!='Closed') {$msg='Poort open om '.strftime("%H:%M:%S", $STpoort);$deurbel=true;if(xcache_get('alertpoort')<$time-60) {xcache_set('alertpoort', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
 		if($SAchterdeur!='Closed') {$msg='Achterdeur open om '.strftime("%H:%M:%S", $STAchterdeur);$deurbel=true;if(xcache_get('alertAchterdeur')<$time-60) {xcache_set('alertAchterdeur', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
@@ -69,7 +68,7 @@ if($domoticz) {
 		if($PP_Bureel_Tobi>500) {if(xcache_get('alertpowerbureeltobi')<$time-1800) {$msg='Verbruik bureel Tobi='.$PP_Bureel_Tobi;telegram($msg);xcache_set('alertpowerbureeltobi', $time);}}
 		if($Spoort!='Closed') {if(xcache_get('alertpoort')<$time-900&&$STpoort<$time-900) {$msg='Poort Open sinds '.strftime("%H:%M:%S", $STpoort);xcache_set('alertpoort',$time);telegram($msg);}}
 		if($SSD_Zolder_Smoke!= 'Off') {$msg='Rook gedecteerd op de zolder!';if(xcache_get('alertSD_Zolder_Smoke')<$time-90) {xcache_set('alertSD_Zolder_Smoke',$time);telegram($msg);ios($msg);if($sms==true) sms($msg);}}
-		if($SDeurbel!='Off') {$msg='Deurbel';if(xcache_get('alertDeurbel')<$time-30) {xcache_set('alertDeurbel',$time);telegram($msg);ios($msg);} Udevice($SIDeurbel,0,'Off');if($SLicht_Hall_Auto=='On') {Schakel($SILicht_Voordeur, 'On');xcache_set('BelLichtVoordeur',2);}
+		if($SDeurbel!='Off') {$msg='Deurbel';if(xcache_get('alertDeurbel')<$time-60) {xcache_set('alertDeurbel',$time);ios($msg);} Udevice($SIDeurbel,0,'Off');if($SLicht_Hall_Auto=='On') {Schakel($SILicht_Voordeur, 'On');xcache_set('BelLichtVoordeur',2);}
 		}
 	}
 	
@@ -106,21 +105,20 @@ if($domoticz) {
 	if($setpointBadkamer!=0 && $RTBadkamer < $time - 3600) {xcache_set('setpoint111',0);$setpointBadkamer=0;}
 	if($setpointBadkamer!=2) {
 		if($TBuiten<21 && $SHeating=='On') {
-			$voorwarmen = voorwarmen($TBadkamer,22,120);
-			if(in_array(date('N',$time), array(1,2,3,4,5)) && $time>=(strtotime('5:30')-$voorwarmen) && $time<=(strtotime('6:20'))) $Set=20.0;
-			else if(in_array(date('N',$time), array(1,2,3,4,5)) && $time>=(strtotime('6:20')-$voorwarmen) && $time<=(strtotime('7:30'))) $Set=22.0;
-			 else if(in_array(date('N',$time), array(6,7)) && $time>=(strtotime('7:30')-$voorwarmen) && $time<=(strtotime('9:30'))) $Set=20.0;
+			$voorwarmen = voorwarmen($TBadkamer,22,140);
+			if(in_array(date('N',$time), array(1,2,3,4,5)) && $time>=(strtotime('6:00')-$voorwarmen) && $time<=(strtotime('7:20'))) $Set=22.0;
+		     else if(in_array(date('N',$time), array(6,7)) && $time>=(strtotime('7:30')-$voorwarmen) && $time<=(strtotime('9:30'))) $Set=20.0;
 		}
 		if($SDeurBadkamer!='Closed' && $STDeurBadkamer < $time - 180) $Set=14.0;
 		if($RBadkamer != $Set) {Udevice($RIBadkamer,0,$Set);$RBadkamer=$Set;}
 		if($RTBadkamer < $time - 8600) Udevice($RIBadkamer,0,$Set);
 	}
 	$Set = setradiator($TBadkamer, $RBadkamer);
-	if(in_array(date('N',$time), array(1,2,3,4,5)) && in_array(date('G',$time), array(4,5,6)) && $Set < 20) $Set = 20.0;
+	if(in_array(date('N',$time), array(1,2,3,4,5)) && in_array(date('G',$time), array(4,5,6)) && $Set < 21) $Set = 21.0;
 	if($RBadkamerZ!=$Set) {Udevice($RIBadkamerZ,0,$Set);}
 	
 	//Slaapkamer
-	/*$Set = 4.0;
+	$Set = 4.0;
 	$setpointKamer = xcache_get('setpoint97');
 	if($setpointKamer!=0 && $RTKamer < $time - 3600) {xcache_set('setpoint97',0);$setpointKamer=0;}
 	if($setpointKamer!=2) {
@@ -132,7 +130,7 @@ if($domoticz) {
 	if($RKamer != $Set) {Udevice($RIKamer,0,$Set);$RKamer=$Set;}
 	if($RTKamer < $time - 8600) Udevice($RIKamer,0,$Set);
 	$Set = setradiator($TKamer, $RKamer);
-	if($RKamerZ!=$Set) {Udevice($RIKamerZ,0,$Set);}*/
+	if($RKamerZ!=$Set) {Udevice($RIKamerZ,0,$Set);}
 	
 	//Slaapkamer Tobi
 	$Set = 4.0;
@@ -172,24 +170,12 @@ if($domoticz) {
 	if($RKamerJuliusZ!=$Set) {Udevice($RIKamerJuliusZ,0,$Set);}
 	
 	//Brander
-	if(($TLiving < $RLiving || $TBadkamer < $RBadkamer || /*$TKamer < $RKamer || */$TKamerTobi < $RKamerTobi || $TKamerJulius < $RKamerJulius ) && $SBrander == "Off" && $STBrander < $time-230) Schakel($SIBrander, 'On');
-	if($TLiving >= $RLiving-0.3 && $TBadkamer >= $RBadkamer - 0.7 && /*$TKamer >= $RKamer-0.3 && */$TKamerTobi >= $RKamerTobi-0.2 && $TKamerJulius >= $RKamerJulius-0.2 && $SBrander == "On" && $STBrander < $time-230) Schakel($SIBrander, 'Off');
+	if(($TLiving < $RLiving || $TBadkamer < $RBadkamer || $TKamer < $RKamer || $TKamerTobi < $RKamerTobi || $TKamerJulius < $RKamerJulius ) && $SBrander == "Off" && $STBrander < $time-230) Schakel($SIBrander, 'On');
+	if($TLiving >= $RLiving-0.3 && $TBadkamer >= $RBadkamer - 0.7 && $TKamer >= $RKamer-0.3 && $TKamerTobi >= $RKamerTobi-0.2 && $TKamerJulius >= $RKamerJulius-0.2 && $SBrander == "On" && $STBrander < $time-230) Schakel($SIBrander, 'Off');
 	
 	//Subwoofer
 	if($SDenon=='On' && $SSubwoofer!='On')  Schakel($SISubwoofer,'On');
 	else if($SDenon=='Off'&& $SSubwoofer!='Off') Schakel($SISubwoofer,'Off');
-	
-	//KODI
-	if($SLicht_Hall_Auto=='On') {
-		if($Kodi['Status']=='Video') {
-			if($DlevelZithoek == 20) Schakel($DIZithoek, 'Off');
-			if($DlevelEettafel == 24) Schakel($DIEettafel, 'Off');
-		}
-		else if($Kodi['Status']=='Paused' && $SThuis=='On' && $SSlapen=="Off") {
-			if($DlevelZithoek<20) Dim($DIZithoek, 21);
-			if($DlevelEettafel<24) Dim($DIEettafel, 25);
-		}
-	}
 	
 	//PIRS resetten
 	if($SPIR_Living!='Off'&&$STPIR_Living<$time-30) Schakel($SIPIR_Living,'Off');
@@ -222,6 +208,10 @@ if($domoticz) {
 		if($SPluto=='On') Schakel($SIPluto, 'Off');
 	}
 	
+	//Lichten uitschakelen na 3 uur. 
+	$uit = $time - 10800;
+	if($STobi!='Off'&&$STTobi<$uit) Schakel($SITobi, 'Off');
+	
 	//Buienradar
 	if(xcache_get('buienradar')<$time-290) {
 		$rains=file_get_contents('http://gps.buienradar.nl/getrr.php?lat=50.892880&lon=3.112568');
@@ -241,78 +231,97 @@ if($domoticz) {
 		}
 	}
 	
-	//Refresh Zwave node
-	if($STTV>$time-15) RefreshZwave(10);
-	if($STLichtHallZolder>$time-15) RefreshZwave(20);
-	if($STLichtInkomVoordeur>$time-15) RefreshZwave(23);
-	if($STLichtTerrasGarage>$time-15) RefreshZwave(16);
-	
 	//Diskstation starten als bureel Tobi aan ligt
-	if($SBureel_Tobi!='Off'||$STV!='Off') {if(xcache_get('wakediskstation')<$time-900) {xcache_set('wakediskstation',$time);Schakel(72, 'On');}}
+	if($SDiskStation!='On' &&($SBureel_Tobi!='Off'||$SKodiPower!='Off'||$SiMac!='Off')) {if(xcache_get('wakediskstation')<$time-900) {xcache_set('wakediskstation',$time);Schakel(72, 'On');}}
 	
 	//Sleep dimmers
 	$dimmers = array('Eettafel','Zithoek');
 	foreach($dimmers as $dimmer) {
 		if(${'D'.$dimmer}!='Off') {
 			$sleep = xcache_get('dimsleep'.$dimmer);
-			echo 'level='.$sleep.'<br/>';
-			$dim = 60/$sleep<5?5:60/$sleep;
-			$dim = $dim>30?30:$dim;
-			echo 'dim='.$dim.'<br/>';
-			if($sleep > 0 && ${'DT'.$dimmer}<$time-($dim)) {
-				$sleep = $sleep - 1;
-				Dim(${'DI'.$dimmer},$sleep);
-				xcache_set('dimsleep'.$dimmer,$sleep);
+			if($sleep > 0) {
+				echo 'level='.$sleep.'<br/>';
+				$dim = 60/$sleep<5?5:60/$sleep;
+				$dim = $dim>30?30:$dim;
+				echo 'dim='.$dim.'<br/>';
+				if(${'DT'.$dimmer}<$time-($dim)) {
+					$sleep = $sleep - 1;
+					Dim(${'DI'.$dimmer},$sleep);
+					xcache_set('dimsleep'.$dimmer,$sleep);
+				}
 			}
 		}
 	}
 	//Alles uitschakelen
 	if($SThuis=='Off'||$SSlapen=="On") {
-		if($STV!='Off'&&$STTV<$time-20) Schakel($SITV, 'Off');
-		if($SDenon!='Off'&&$STDenon<$time-20) Schakel($SIDenon, 'Off');
-		if($SLamp_Bureel!='Off'&&$STLamp_Bureel<$time-20) Schakel($SILamp_Bureel, 'Off');
-		if($STerras!='Off'&&$STTerras<$time-20) Schakel($SITerras, 'Off');
-		if($SLicht_Garage!='Off'&&$STLicht_Garage<$time-20) Schakel($SILicht_Garage, 'Off');
-		if($SLicht_Voordeur!='Off'&&$STLicht_Voordeur<$time-20) Schakel($SILicht_Voordeur, 'Off');
+		if($STV!='Off'&&$STTV<$time-50) Schakel($SITV, 'Off');
+		if($SKristal!='Off'&&$STKristal<$time-50) Schakel($SIKristal, 'Off');
+		if($STVLed!='Off'&&$STTVLed<$time-50) Schakel($SITVLed, 'Off');
+		if($SDenon!='Off'&&$STDenon<$time-50) Schakel($SIDenon, 'Off');
+		if($SLamp_Bureel!='Off'&&$STLamp_Bureel<$time-50) Schakel($SILamp_Bureel, 'Off');
+		if($STerras!='Off'&&$STTerras<$time-50) Schakel($SITerras, 'Off');
+		if($SLicht_Garage!='Off'&&$STLicht_Garage<$time-50) Schakel($SILicht_Garage, 'Off');
+		if($SLicht_Voordeur!='Off'&&$STLicht_Voordeur<$time-50) Schakel($SILicht_Voordeur, 'Off');
 		if($SLicht_Hall!='Off'&&$STLicht_Hall<$time-50&&$STPIR_Hall<$time-50) Schakel($SILicht_Hall, 'Off');
-		if($SLicht_Inkom!='Off'&&$STLicht_Inkom<$time-30&&$STPIR_Inkom<$time-50) Schakel($SILicht_Inkom, 'Off');
-		if($SLicht_Zolder!='Off'&&$STLicht_Zolder<$time-20) Schakel($SILicht_Zolder, 'Off');
-		if($SBureel_Tobi!='Off'&&$STBureel_Tobi<$time-20) Schakel($SIBureel_Tobi, 'Off');
-		if($DEettafel!='Off'&&$DTEettafel<$time-20) Schakel($DIEettafel, 'Off');
-		if($DZithoek!='Off'&&$DTZithoek<$time-20) Schakel($DIZithoek, 'Off');
+		if($SLicht_Inkom!='Off'&&$STLicht_Inkom<$time-50&&$STPIR_Inkom<$time-50) Schakel($SILicht_Inkom, 'Off');
+		if($SLicht_Zolder!='Off'&&$STLicht_Zolder<$time-50) Schakel($SILicht_Zolder, 'Off');
+		if($SBureel_Tobi!='Off'&&$STBureel_Tobi<$time-50) Schakel($SIBureel_Tobi, 'Off');
+		if($DEettafel!='Off'&&$DTEettafel<$time-50) Schakel($DIEettafel, 'Off');
+		if($DZithoek!='Off'&&$DTZithoek<$time-50) Schakel($DIZithoek, 'Off');
 		if($setpointLiving!=0 && $RTLiving<$time-3600) xcache_set('setpoint130',0);
 		if($setpointBadkamer!=0 && $RTBadkamer<$time-3600) xcache_set('setpoint111',0);
 		if($setpointKamer!=0 && $RTKamer<$time-3600) xcache_set('setpoint97',0);
 		if($setpointKamerTobi!=0 && $RTKamerTobi<$time-3600) xcache_set('setpoint548',0);
 		if($setpointKamerJulius!=0 && $RTKamerJulius<$time-3600) xcache_set('setpoint549',0);
+		if($SKeuken!='Off'&&$STKeuken<$time-50) Schakel($SIKeuken, 'Off');
+		if($SZolderG!='Off'&&$STZolderG<$time-50) Schakel($SIZolderG, 'Off');
+		//if($SWerkblad!='Off'&&$STWerkblad<$time-50) Schakel($SIWerkblad, 'Off');
+		if($SiMac!='Off'&&$STiMac<$time-300) Schakel($SIiMac, 'Off');
 	}	
-	
-	//battery levels
-	if(xcache_get('batteries')<$time-3600) {
-		if($SBPIRInkombat>=0&&$SBPIRInkombat<=100) {percentdevice(398,$SBPIRInkombat);if($SBPIRInkombat<20) telegram('Bat PIRInkom low');}
-		if($SBPIRHallbat>=0&&$SBPIRHallbat<=100) {percentdevice(399,$SBPIRHallbat);if($SBPIRHallbat<20) telegram('Bat PIRIHall low');}
-		if($SBPIRGaragebat>=0&&$SBPIRGaragebat<=100) {percentdevice(400,$SBPIRGaragebat);if($SBPIRGaragebat<20) telegram('Bat PIRGarage low');}
-		if($RBLivingZE>=0&&$RBLivingZE<=100) {percentdevice(401,$RBLivingZE);if($RBLivingZE<20) telegram('Bat LivingZE low');}
-		if($RBLivingZZ>=0&&$RBLivingZZ<=100) {percentdevice(402,$RBLivingZZ);if($RBLivingZZ<20) telegram('Bat LivingZZ low');}
-		if($RBLivingZB>=0&&$RBLivingZB<=100) {percentdevice(402,$RBLivingZB);if($RBLivingZB<20) telegram('Bat LivingZB low');}
-		if($RBBadkamerZ>=0&&$RBBadkamerZ<=100) {percentdevice(403,$RBBadkamerZ);if($RBBadkamerZ<20) telegram('Bat BadkamerZ low');}
-		if($SBAchterdeurbat>=0&&$SBAchterdeurbat<=100) {percentdevice(404,$SBAchterdeurbat);if($SBAchterdeurbat<20) telegram('Bat Achterdeur low');}
-		if($SBDeurBadkamerbat>=0&&$SBDeurBadkamerbat<=100) {percentdevice(568,$SBDeurBadkamer);if($SBDeurBadkamer<20) telegram('Bat Deur Badkamer low');}
-		if($TBZolder>=0&&$TBZolder<=100) {percentdevice(406,$TBZolder);if($TBZolder<20) telegram('Bat SD Zolder low');}
-		if($TBLiving>=0&&$TBLiving<=100) {percentdevice(552,$TBLiving);if($TBLiving<20) telegram('Bat SD Living low');}
-		//if($TBKamer>=0&&$TBKamer<=100) {percentdevice(552,$TBKamer);if($TBKamer<20) telegram('Bat SD Kamer low');}
-		if($TBKamerTobi>=0&&$TBKamerTobi<=100) {percentdevice(553,$TBKamerTobi);if($TBKamerTobi<20) telegram('Bat SD Kamer Tobi low');}
-		if($TBKamerJulius>=0&&$TBKamerJulius<=100) {percentdevice(554,$TBKamerJulius);if($TBKamerJulius<20) telegram('Bat SD Kamer Julius low');}
-		if($SBRaamLiving>=0&&$SBRaamLiving<=100) {percentdevice(567,$SBRaamLiving);if($SBRaamLiving<20) telegram('Bat Raam Living low');}
-		if($SBRaamKamer>=0&&$SBRaamKamer<=100) {percentdevice(569,$SBRaamKamer);if($SBRaamKamer<20) telegram('Bat Raam Kamer low');}
-		if($SBRaamKamerTobi>=0&&$SBRaamKamerTobi<=100) {percentdevice(570,$SBRaamKamerTobi);if($SBRaamKamerTobi<20) telegram('Bat Raam Kamer Tobi low');}
-		if($SBRaamKamerJulius>=0&&$SBRaamKamerJulius<=100) {percentdevice(571,$SBRaamKamerJulius);if($SBRaamKamerJulius<20) telegram('Bat Raam Kamer Julius low');}
-		RefreshZwave(10);
-		RefreshZwave(20);
-		RefreshZwave(23);
-		RefreshZwave(16);
-		xcache_set('batteries',$time);
+	if($SThuis=='Off') {
+		if($SLichtBadkamer1!='Off'&&$STBadkamer1<$time-50) Schakel($SIBadkamer1, 'Off');
 	}
+	if($STobi!='Off'&&$STTobi<time-7200) Schakel($SITobi, 'Off');
+	
+	//Meldingen inschakelen indien langer dan 12 uur uit. 
+	if($SMeldingen!='On' && $STMeldingen<$time-43200) Schakel($SIMeldingen, 'On');
+
+	//Refresh Zwave node
+	//if($STTV>$time-5||$STSubwoofer>$time-5||$STLamp_Bureel>$time-5) RefreshZwave(61);
+	if($STLichtTerrasGarage>$time-5) RefreshZwave(16);
+	if($STLichtHallZolder>$time-5) RefreshZwave(20);
+	if($STLichtInkomVoordeur>$time-5) RefreshZwave(23);
+	if($STBureel_Tobi>$time-5) RefreshZwave(24);
+	if($STPluto>$time-5) RefreshZwave(53);
+	if($STKeukenZolder>$time-5) RefreshZwave(56);
+	//if($STKeukenTuin>$time-5) RefreshZwave(59);
+	if($STLichtBadkamer>$time-5) RefreshZwave(65);
+	
+	//KODI
+	if($SLicht_Hall_Auto=='On'&&$SKodi=='On'&&$STV=='On') {
+		$urltitle = urlencode('{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": [], "playerid": 1 }, "id": "VideoGetItem"}');
+		$urlspeed = urlencode('{"jsonrpc": "2.0", "method": "Player.GetProperties", "params": { "playerid": 1,"properties": ["speed"] }, "id": 1}');
+//		for ($k = 0 ; $k < 15; $k++){
+			$title = json_decode(curl('http://192.168.0.7:1597/jsonrpc?request='.$urltitle));
+			if(isset($title->result->item->label)) {
+				if($title->result->item->label!='') {
+					$speed = json_decode(curl('http://192.168.0.7:1597/jsonrpc?request='.$urlspeed));
+					if($speed->result->speed==0) {
+						if($DlevelZithoek<20) {Dim($DIZithoek, 21);$DlevelZithoek=20;}
+						if($DlevelEettafel<24) {Dim($DIEettafel, 25);$DlevelEettafel=24;}
+					} else {
+						if($DlevelZithoek == 20) {Schakel($DIZithoek, 'Off');$DlevelZithoek=0;}
+						if($DlevelEettafel == 24) {Schakel($DIEettafel, 'Off');$DlevelEettafel=0;}
+					}
+				}
+			} else {
+				if($DlevelZithoek<20) {Dim($DIZithoek, 21);$DlevelZithoek=20;}
+				if($DlevelEettafel<24) {Dim($DIEettafel, 25);$DlevelEettafel=24;}
+			}
+//			sleep(2);
+//		}
+	}
+		
 	
 	//End Acties
 } else {
@@ -320,7 +329,7 @@ if($domoticz) {
 	$domoticzconnection = $domoticzconnection + 1;
 	xcache_set('domoticzconnection',$domoticzconnection);
 	if($domoticzconnection==1) telegram('Geen verbinding met Domoticz');
-	if($domoticzconnection>5) {
+	if($domoticzconnection>15) {
 		xcache_set('domoticzconnection',0);
 		$output = shell_exec('/var/www/secure/restart_domoticz');
 		telegram($output);
