@@ -68,7 +68,11 @@ echo '<div style="position:absolute;top:5px;left:278px;width:130px;text-align:ri
 <br/><form method="POST"><input type="hidden" name="Scene" value="3"><input type="hidden" name="Naam" value="TV Kijken"><input type="image" src="images/TV_On.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="Scene" value="4"><input type="hidden" name="Naam" value="Kodi kijken"><input type="image" src="images/kodi.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="Scene" value="5"><input type="hidden" name="Naam" value="Eten"><input type="image" src="images/eten.png" width="48px" height="48px"></form>
+<a href="#" onclick="toggle_visibility(\'Plus\');" style="text-decoration:none"><img src="images/plus.png" width="60px" height="60px"/></a>
 </div>';
+
+
+
 Dimmer('Zithoek',48,125,130);
 Dimmer('Eettafel',48,125,270);
 Schakelaar('TV','TV',48,44,88);	
@@ -98,12 +102,11 @@ Schakelaar('Licht_Garage_Auto','Clock',36,312,299);
 Schakelaar('Pluto','Laptop',25,370,217);	
 Schakelaar('Thuis','Home',48,268,428);	
 Schakelaar('Slapen','Sleepy',48,335,428);	
-Schakelaar('Meldingen','Alarm',48,5,16);	
+Schakelaar('Terras','Light',48,13,15);
 Schakelaar('Terras','Light',48,77,15);
 Schakelaar('Brander','Fire',48,765,260);
 Schakelaar('Licht_Zolder','Light',48,705,260);
 Schakelaar('Bureel_Tobi','Plug',36,780,380);
-Schakelaar('Heating','Fire',48,778,16);
 Thermometer('Buiten',110,140,17);
 Thermometer('Living',70,178,232);
 Thermometer('Badkamer',70,432,447);
@@ -116,11 +119,17 @@ Setpoint('Badkamer',40,443,405);
 Setpoint('Kamer',40,586,405);
 Setpoint('KamerTobi',40,479,95);
 Setpoint('KamerJulius',40,586,95);
-Radiator('LivingZZ',-90,221,77);
-Radiator('BadkamerZ',0,403,349);
-Radiator('KamerTobiZ',-90,463,77); //tobi
-Radiator('KamerJuliusZ',-90,583,77); //julius
-Radiator('KamerZ',90,542,456); //kamer
+//Radiator('LivingZZ',-90,221,77);
+//Radiator('BadkamerZ',0,403,349);
+//Radiator('KamerTobiZ',-90,463,77); //tobi
+//Radiator('KamerJuliusZ',-90,583,77); //julius
+//Radiator('KamerZ',90,542,456); //kamer
+
+echo '<div id="Plus" class="dimmer" style="display:none;">';
+Schakelaar('Meldingen','Alarm',48,180,80);	
+Schakelaar('Heating','Fire',48,265,80);
+echo '<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div></div>';
+
 
 if($SThuis=='Off'||$SSlapen=='On'){Secured(52,88,250,196);Secured(50,345,129,57);Secured(255,88,316,141);}
 if($SThuis=='Off'){Secured(404,212,129,65);Secured(469,214,45,66);}
@@ -147,11 +156,7 @@ if($SRaamKamer!='Closed') echo '<div style="position:absolute;top:586px;left:481
 if($SDeurBadkamer!='Closed') echo '<div style="position:absolute;top:421px;left:341px;width:7px;height:46px;background:rgba(255,0,0,1);z-index:-10;"></div>';
 if($SBureel_Tobi!='Off') echo'<div style="position:absolute;top:800px;left:425px;width:50px;cursor:pointer;text-align:center;">'.$PP_Bureel_Tobi.'</div>';
 
-
-$execution= microtime(true)-$start;
-$phptime=$execution-$domotime;
-echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:left;font-size:12px" >
-'.$TInternal_Temperature.'°C|'.$SCPU_Usage.'|'.$SMemory_Usage.'M|D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'<br/></div>';
+//$execution= microtime(true)-$start;$phptime=$execution-$domotime;echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:left;font-size:12px" >D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'<br/>';print_r($_POST);echo '</div>';
 
 } else echo '<div style="background:#ddd;"><a href="">Geen verbinding met Domoticz</a></div>';	
 } else {header("Location:index.php");die("Redirecting to:index.php");}
