@@ -20,7 +20,7 @@ select{-webkit-appearance:none;border:0; margin-top:0px;cursor:pointer;}
 .box{position:absolute;left:0px;width:80px;background:#ddd;border-radius:10px;padding-top:10px;}
 .box2{position:absolute;width:55px;padding:0px;}
 .right{text-align:right;}
-.dimmer{position:absolute;top:2px;left:80px;width:300px;padding:50px;background:rgba(233,233,233,0.9);border-radius:10px;z-index:1000;}
+.dimmer{position:absolute;top:0px;left:0px;height:734px;width:389px;padding:50px;background:rgba(220,220,220,0.97);border-radius:10px;z-index:1000;}
 .red{position:absolute;background:rgba(255,50,50,0.6);border-radius:7px; padding:1px 2px 1px 2px;}
 .grey{position:absolute;background:rgba(210,210,210,0.6);border-radius:7px; padding:2px 2px 1px 2px;}
 .tmpbg{position:absolute;background-repeat:no-repeat;border-radius:6px;z-index:-1;}
@@ -29,3 +29,4 @@ select{-webkit-appearance:none;border:0; margin-top:0px;cursor:pointer;}
 .secured{position:absolute;background:repeating-linear-gradient(135deg,rgba(180,0,0,0),rgba(180,0,0,0) 7px,rgba(180,0,0,0) 8px,rgba(180,0,0,0.2) 15px);z-index:-100;}
 .motion{position:absolute;background:rgba(255,0,0,0.1);z-index:-10;}
 .motionr{position:absolute;background:rgba(255,0,0,0.5);z-index:-10;}
+

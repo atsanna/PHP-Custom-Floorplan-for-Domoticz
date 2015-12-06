@@ -38,13 +38,11 @@ function setradiator($temp,$setpoint) {
 	return $setpointSet;
 }
 function Thermometer($name, $size, $boven, $links) {
-	global ${'T'.$name},${'TI'.$name},${'TB'.$name},${'TT'.$name}, $time;
+	global ${'T'.$name},${'TI'.$name},${'TT'.$name}, $time;
 	$hoogte=${'T'.$name}*$size*0.0275;
 	if($hoogte>$size*0.85) $hoogte=$size*0.85;else if ($hoogte<0) $hoogte=0;
 	$top=$size*0.8-$hoogte;if($top<0) $top=0;
 	$top=$top+$size*0.1;
-	if (${'TB'.$name}==0&&${'TT'.$name}>$time-300) $battery=100;
-	else $battery=${'TB'.$name};
 	switch (${'T'.$name}) {
 		case ${'T'.$name}>=22:$tcolor='f00';$dcolor='aa7076';break;
 		case ${'T'.$name}>=20:$tcolor='d12';$dcolor='8a8096';break;
@@ -58,8 +56,7 @@ function Thermometer($name, $size, $boven, $links) {
 		<div class="tmpbg" style="top:'.$top.'px;left:'.$size*0.07.'px;width:'.$size*0.27.'px;height:'.$hoogte.'px;background:linear-gradient(to bottom, #'.$tcolor.', #'.$dcolor.');"></div>
 		<input type="image" src="images/temp.png" height="'.$size.'px" width="auto"/>
 	</form>';
-	echo $battery<20?'<div class="red" style="top:'.$size*0.71.'px;left:'.$size*0.035.'px;width:'.$size*0.3.'px;font-size:'.$size*1.25.'%;">'
-	         :'<div class="grey" style="top:'.$size*0.71.'px;left:'.$size*0.035.'px;width:'.$size*0.3.'px;font-size:'.$size*1.25.'%;">';
+	echo '<div class="grey" style="top:'.$size*0.71.'px;left:'.$size*0.035.'px;width:'.$size*0.3.'px;font-size:'.$size*1.25.'%;">';
 	echo number_format(${'T'.$name},1).'</div></form></div>';
 }
 function Schakelaar($name,$kind,$size,$boven,$links) {
@@ -71,21 +68,38 @@ function Schakelaar($name,$kind,$size,$boven,$links) {
 }
 function Dimmer($name,$size,$boven,$links) {
 	global ${'D'.$name},${'DI'.$name},${'Dlevel'.$name},${'DT'.$name};
-	echo '<div id="'.$name.'" class="dimmer" style="display:none;height:732px;width:310px;">
-		<form method="POST">
-    <h2>'.$name.'</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'">
-		<br/><input name="dimlevel" id="dimlevel" type ="range" min ="0" max="100" step ="1" value ="'.${'Dlevel'.$name}.'" onchange="this.form.submit()"/><br/><br/>
-		<div style="position:absolute;top:250px;left:30px;z-index:1000;"><input type="image" name="dimleveloff" value ="0" src="images/off.png" width="48px" height="48px"/></div>
-		<div style="position:absolute;top:250px;left:175px;z-index:1000;"><input type="image" name="dimsleep" value ="100" src="images/Sleepy" width="48px" height="48px"/></div>
-		<div style="position:absolute;top:250px;right:30px;z-index:1000;"><input type="image" name="dimlevelon" value ="100" src="images/on.png" width="48px" height="48px"/></div>
+	echo '<div id="'.$name.'" class="dimmer" style="display:none;">
+		<form method="POST" action="floorplan.php" oninput="level.value = dimlevel.valueAsNumber">
+    <h2>'.$name.': <output for="Actie" name="level">'.round(${'Dlevel'.$name},0).'</output>%</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'">
+		<br/><input name="dimlevel" id="dimlevel" type ="range" min ="0" max="60" step ="1" value ="'.${'Dlevel'.$name}.'" onchange="this.form.submit()"/><br/><br/>
+		<div style="position:absolute;top:250px;left:30px;z-index:1000;"><input type="image" name="dimleveloff" value ="0" src="images/off.png" width="90px" height="90px"/></div>
+		<div style="position:absolute;top:250px;left:200px;z-index:1000;"><input type="image" name="dimsleep" value ="100" src="images/Sleepy" width="90px" height="90px"/></div>
+		<div style="position:absolute;top:250px;right:30px;z-index:1000;"><input type="image" name="dimlevelon" value ="100" src="images/on.png" width="90px" height="90px"/></div>
     </form>
-		<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="48px" height="48px"/></a></div>
+		<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
 	</div>
-	<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;" title="'.strftime("%a %e %b %k:%M:%S", ${'DT'.$name}).'">
+	<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;">
 	<a href="#" onclick="toggle_visibility(\''.$name.'\');" style="text-decoration:none">';
 	echo ${'D'.$name}=='Off'?'<input type="image" src="images/Light_Off.png" height="'.$size.'px" width="auto">'
-								 :'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto">';
+								 :'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto"><div style="position:absolute;top:6px;right:16px;">'.${'Dlevel'.$name}.'</div>';
 	echo '</a></div>';
+}
+function Setpoint($name,$size,$boven,$links) {
+	global ${'R'.$name},${'RI'.$name},${'RT'.$name},${'T'.$name};
+	echo '<div id="'.$name.'" class="dimmer" style="display:none;">
+	
+		<form method="POST" action="floorplan.php" oninput="level.value = Actie.valueAsNumber"><input type="hidden" name="Setpoint" value="'.${'RI'.$name}.'" >
+    <h2>'.$name.'<br/>Set: <output for="Actie" name="level">'.round(${'R'.$name},0).'</output>°C<br/>Momenteel: '.${'T'.$name}.'°C</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="setpoint" value="'.${'RI'.$name}.'">
+		<br/><br/>
+		<input name="Actie" id="Actie" type ="range" min ="14" max="23" step ="1" value ="'.${'R'.$name}.'" onchange="this.form.submit()"/><br/><br/>
+		
+    </form>
+		<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
+	</div>';
+	
+	echo '<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;"><a href="#" onclick="toggle_visibility(\''.$name.'\');" style="text-decoration:none">';
+	echo ${'R'.$name}>${'T'.$name}?'<img src="images/flame.png" height="'.$size.'px" width="auto">':'<img src="images/flamegrey.png" height="'.$size.'px" width="auto">';
+	echo '<div class="setpoint" style="font-size:'.$size*2.3 .'%;width:'.$size*0.7 .'px;">'.round(${'R'.$name},0).'</div></a></div>';
 }
 function Smokedetector($name,$size,$boven,$links) {
 	global ${'S'.$name},${'SI'.$name},${'SB'.$name},${'ST'.$name};
@@ -97,29 +111,13 @@ function Smokedetector($name,$size,$boven,$links) {
 	echo ${'SB'.$name}<40?'<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;width:36px;height:36px;background:rgba(255, 0, 0, 0.7);z-index:-11;"></div>':'';
 }
 function Radiator($name,$draai,$boven,$links) {
-	global ${'R'.$name},${'RB'.$name},${'RT'.$name};
-	echo ${'RB'.$name}<40?'<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;width:40px;background:rgba(255, 50, 50, 0.6);border-radius:10px;padding:0px;transform:rotate('.$draai.'deg);-webkit-transform:rotate('.$draai.'deg);" title="'.strftime("%a %e %b %k:%M:%S", ${'RT'.$name}).'">'.number_format(${'R'.$name},0).'</div>'
-							 :'<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;width:40px;background:rgba(150, 150, 150, 0.6);border-radius:10px;padding:0px;transform:rotate('.$draai.'deg);-webkit-transform:rotate('.$draai.'deg);" title="'.strftime("%a %e %b %k:%M:%S", ${'RT'.$name}).'">'.number_format(${'R'.$name},0).'</div>';
+	global ${'R'.$name},${'RT'.$name};
+	echo '<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;width:35px;background:rgba(150, 150, 150, 0.5);border-radius:10px;padding:0px;letter-spacing:-1px;transform:rotate('.$draai.'deg);-webkit-transform:rotate('.$draai.'deg);">'.number_format(${'R'.$name},0).'</div>';
 }
-function Setpoint($name,$size,$boven,$links) {
-	global ${'R'.$name},${'RI'.$name},${'RT'.$name},${'T'.$name};
-	echo '<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;">';
-	echo ${'R'.$name}>${'T'.$name}?'<img src="images/flame.png" height="'.$size.'px" width="auto">':'<img src="images/flamegrey.png" height="'.$size.'px" width="auto">';
-	echo '<div class="setpoint" style="font-size:'.$size*2.3 .'%;width:'.$size*0.7 .'px;">
-		<form method="POST" action="">
-			<input type="hidden" name="Setpoint" value="'.${'RI'.$name}.'" >
-			<input type="hidden" name="cachename" value="'.${'R'.$name}.'" >
-			<span class="css-select-moz"><select name="Actie" class="css-select" onChange="this.form.submit()" style="font-size:'.$size*2 .'%;width:'.$size*0.7 .'px;">
-				<option '.number_format(${'R'.$name},0).') selected>'.number_format(${'R'.$name},0).'</option>
-				<option>12</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option>
-			</select></span>
-		</form>
-		</div>';
-	echo '</div>';
-}
+
 function Timestamp($name,$draai,$boven,$links) {
 	global ${'S'.$name},${'ST'.$name};
-	echo '<div class="stamp" style="top:'.$boven.'px;left:'.$links.'px;transform:rotate('.$draai.'deg);-webkit-transform:rotate('.$draai.'deg);">'.strftime("%k:%M",${'ST'.$name}).'</div>';
+	echo '<div class="stamp" style="padding:0px;letter-spacing:-1px;top:'.$boven.'px;left:'.$links.'px;transform:rotate('.$draai.'deg);-webkit-transform:rotate('.$draai.'deg);">'.strftime("%k:%M",${'ST'.$name}).'</div>';
 }
 function Secured($boven, $links, $breed, $hoog) {
 	echo '<div class="secured" style="top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;"></div>';
@@ -137,4 +135,28 @@ function RefreshZwave($node) {
 	$zwaveoptions = array('http'=>array('header'=>'Content-Type: application/x-www-form-urlencoded\r\n','method'=>'POST','content'=>http_build_query($zwavedata),),);
 	$zwavecontext=stream_context_create($zwaveoptions);
 	for ($k=1;$k<=5;$k++){sleep(2);$result=file_get_contents($zwaveurl,false,$zwavecontext);if($result=='OK') break;}
+}
+function curl($url){
+    $headers = array(
+	    'Content-Type: application/json',
+	);
+	$ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $data = curl_exec($ch);
+    curl_close($ch);
+    return $data;
+}
+function pingDomain($domain, $port){
+    $starttime = microtime(true);
+    $file      = fsockopen ($domain, $port, $errno, $errstr, 1);
+    $stoptime  = microtime(true);
+    $status    = 0;
+    if (!$file) $status = -1;  // Site is down
+    else {
+        fclose($file);
+        $status = floor(($stoptime - $starttime) * 1000);
+    }
+    return $status;
 }
