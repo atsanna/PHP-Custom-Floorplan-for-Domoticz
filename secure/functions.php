@@ -15,14 +15,17 @@ $smsapi = 12345678;
 $smstofrom = 32123456789;
 
 $authenticated = true;
+
 setlocale(LC_ALL,'nl_NL.UTF-8');setlocale(LC_ALL, 'nld_nld');date_default_timezone_set('Europe/Brussels');$time=time();
+$mc = new Memcached();$mc->addServer("localhost", 11211);
+
 function ios($msg) {global $appleid,$applepass,$appledevice;include ("findmyiphone.php");$fmi=new FindMyiPhone($appleid,$applepass);$fmi->playSound($appledevice,$msg);sleep(2);}
 function sms($msg,$device) {file_get_contents('http://api.clickatell.com/http/sendmsg?user='.$smsuser.'&password='.$smspassword.'&api_id='.$smsapi.'&to='.$smstofrom.'&text='.urlencode($msg).'&from='.$smstofrom.'');}
 function domlog($msg) {global $domoticzurl;file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));usleep(50000);}
 function telegram($msg) {global $telegrambot,$telegramchatid;$url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=array('chat_id'=>$telegramchatid,'text'=>$msg);$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);$context=stream_context_create($options);$result=file_get_contents($url,false,$context);return $result;}
 function Schakel($idx,$cmd) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Schakel '.$idx.' '.$cmd);usleep(50000);return $reply;}
 function Scene($idx) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Scene '.$idx);usleep(50000);return $reply;}	
-function Dim($idx,$level) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi dimmer '.$idx.' '.$cmd);usleep(50000);return $reply;}	
+function Dim($idx,$level) {global $domoticzurl,$user;if($level>0&&$level<100) $level=$level+1;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi dimmer '.$idx.' '.$cmd);usleep(50000);return $reply;}	
 function Udevice($idx, $nvalue, $svalue) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Udevice '.$idx.' '.$nvalue.' '.$snvalue);usleep(50000);return $reply;}
 function Textdevice($idx,$text) {global $domoticzurl;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$text),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep(50000);return $reply;}
 function percentdevice($idx,$value) {global $domoticzurl;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$value),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep(50000);return $reply;}
@@ -68,36 +71,77 @@ function Schakelaar($name,$kind,$size,$boven,$links) {
 }
 function Dimmer($name,$size,$boven,$links) {
 	global ${'D'.$name},${'DI'.$name},${'Dlevel'.$name},${'DT'.$name};
-	echo '<div id="'.$name.'" class="dimmer" style="display:none;">
-		<form method="POST" action="floorplan.php" oninput="level.value = dimlevel.valueAsNumber">
-    <h2>'.$name.': <output for="Actie" name="level">'.round(${'Dlevel'.$name},0).'</output>%</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'">
-		<br/><input name="dimlevel" id="dimlevel" type ="range" min ="0" max="60" step ="1" value ="'.${'Dlevel'.$name}.'" onchange="this.form.submit()"/><br/><br/>
-		<div style="position:absolute;top:250px;left:30px;z-index:1000;"><input type="image" name="dimleveloff" value ="0" src="images/off.png" width="90px" height="90px"/></div>
-		<div style="position:absolute;top:250px;left:200px;z-index:1000;"><input type="image" name="dimsleep" value ="100" src="images/Sleepy" width="90px" height="90px"/></div>
-		<div style="position:absolute;top:250px;right:30px;z-index:1000;"><input type="image" name="dimlevelon" value ="100" src="images/on.png" width="90px" height="90px"/></div>
-    </form>
-		<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
-	</div>
+	echo '<div id="D'.$name.'" class="dimmer" style="display:none;">
+				<form method="POST" action="floorplan.php" oninput="level.value = dimlevel.valueAsNumber">
+    			<div style="position:absolute;top:-5px;left:30px;z-index:1000;"><h2>'.$name.': '.round(${'Dlevel'.$name},0).'%</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'"></div>
+				<div style="position:absolute;top:100px;left:28px;z-index:1000;"><input type="image" name="dimleveloff" value ="0" src="images/off.png" width="90px" height="90px"/></div>
+				<div style="position:absolute;top:100px;left:150px;z-index:1000;"><input type="image" name="dimwake" value ="100" src="images/Wakeup.png" width="90px" height="90px"/><input type="hidden" name="dimwakelevel" value="'.${'Dlevel'.$name}.'"></div>
+				<div style="position:absolute;top:100px;left:265px;z-index:1000;"><input type="image" name="dimsleep" value ="100" src="images/Sleepy.png" width="90px" height="90px"/></div>
+				<div style="position:absolute;top:100px;left:387px;z-index:1000;"><input type="image" name="dimlevelon" value ="100" src="images/on.png" width="90px" height="90px"/></div>
+				<div style="position:absolute;top:210px;left:10px;z-index:1000;">
+					<input type="submit" name="dimlevel" value="1"/>
+					<input type="submit" name="dimlevel" value="2"/>
+					<input type="submit" name="dimlevel" value="3"/>
+					<input type="submit" name="dimlevel" value="4"/>
+					<input type="submit" name="dimlevel" value="5"/>
+					<input type="submit" name="dimlevel" value="6"/>
+					<input type="submit" name="dimlevel" value="7"/>
+					<input type="submit" name="dimlevel" value="8"/>
+					<input type="submit" name="dimlevel" value="9"/>
+					<input type="submit" name="dimlevel" value="10"/>
+					<input type="submit" name="dimlevel" value="12"/>
+					<input type="submit" name="dimlevel" value="14"/>
+					<input type="submit" name="dimlevel" value="16"/>
+					<input type="submit" name="dimlevel" value="18"/>
+					<input type="submit" name="dimlevel" value="20"/>
+					<input type="submit" name="dimlevel" value="22"/>
+					<input type="submit" name="dimlevel" value="24"/>
+					<input type="submit" name="dimlevel" value="26"/>
+					<input type="submit" name="dimlevel" value="28"/>
+					<input type="submit" name="dimlevel" value="30"/>
+					<input type="submit" name="dimlevel" value="32"/>
+					<input type="submit" name="dimlevel" value="35"/>
+					<input type="submit" name="dimlevel" value="40"/>
+					<input type="submit" name="dimlevel" value="45"/>
+					<input type="submit" name="dimlevel" value="50"/>
+					<input type="submit" name="dimlevel" value="55"/>
+					<input type="submit" name="dimlevel" value="60"/>
+					<input type="submit" name="dimlevel" value="65"/>
+					<input type="submit" name="dimlevel" value="70"/>
+					<input type="submit" name="dimlevel" value="75"/>
+					<input type="submit" name="dimlevel" value="80"/>
+					<input type="submit" name="dimlevel" value="85"/>
+					<input type="submit" name="dimlevel" value="90"/>
+					<input type="submit" name="dimlevel" value="95"/>
+					<input type="submit" name="dimlevel" value="100"/>
+				</div>
+    			</form>
+				<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
+			</div>
 	<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;">
-	<a href="#" onclick="toggle_visibility(\''.$name.'\');" style="text-decoration:none">';
+	<a href="#" onclick="toggle_visibility(\'D'.$name.'\');" style="text-decoration:none">';
 	echo ${'D'.$name}=='Off'?'<input type="image" src="images/Light_Off.png" height="'.$size.'px" width="auto">'
-								 :'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto"><div style="position:absolute;top:6px;right:16px;">'.${'Dlevel'.$name}.'</div>';
+							:'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto"><div style="position:absolute;top:6px;right:16px;">'.${'Dlevel'.$name}.'</div>';
 	echo '</a></div>';
 }
 function Setpoint($name,$size,$boven,$links) {
 	global ${'R'.$name},${'RI'.$name},${'RT'.$name},${'T'.$name};
-	echo '<div id="'.$name.'" class="dimmer" style="display:none;">
+	echo '<div id="S'.$name.'" class="dimmer" style="display:none;">
 	
 		<form method="POST" action="floorplan.php" oninput="level.value = Actie.valueAsNumber"><input type="hidden" name="Setpoint" value="'.${'RI'.$name}.'" >
-    <h2>'.$name.'<br/>Set: <output for="Actie" name="level">'.round(${'R'.$name},0).'</output>°C<br/>Momenteel: '.${'T'.$name}.'°C</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="setpoint" value="'.${'RI'.$name}.'">
-		<br/><br/>
-		<input name="Actie" id="Actie" type ="range" min ="14" max="23" step ="1" value ="'.${'R'.$name}.'" onchange="this.form.submit()"/><br/><br/>
-		
+    <h2>'.$name.' = '.${'T'.$name}.'°C</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="setpoint" value="'.${'RI'.$name}.'">
+		<div style="position:absolute;top:150px;left:10px;z-index:1000;">';
+		$temps=array(5,8,10,12,14,15,16,17,18,19,20,21,22,23,24);
+		foreach($temps as $temp) {
+			if(${'R'.$name}==$temp) echo '<input type="submit" name="Actie" value="'.$temp.'"/ style="background-color:#5fed5f;background:linear-gradient(to bottom, #5fed5f, #017a01);">';
+			else echo '<input type="submit" name="Actie" value="'.$temp.'"/>';
+		}
+		echo '</div>						
     </form>
 		<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
 	</div>';
 	
-	echo '<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;"><a href="#" onclick="toggle_visibility(\''.$name.'\');" style="text-decoration:none">';
+	echo '<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;"><a href="#" onclick="toggle_visibility(\'S'.$name.'\');" style="text-decoration:none">';
 	echo ${'R'.$name}>${'T'.$name}?'<img src="images/flame.png" height="'.$size.'px" width="auto">':'<img src="images/flamegrey.png" height="'.$size.'px" width="auto">';
 	echo '<div class="setpoint" style="font-size:'.$size*2.3 .'%;width:'.$size*0.7 .'px;">'.round(${'R'.$name},0).'</div></a></div>';
 }

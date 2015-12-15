@@ -15,16 +15,17 @@
 </head><body>
 <?php $start=microtime(true);$time=$_SERVER['REQUEST_TIME'];$offline=$time-300;$eendag=$time-82800;include "secure/functions.php";
 if($authenticated){
-if(isset($_POST['Schakel'])){if(Schakel($_POST['Schakel'],$_POST['Actie'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>';if($_POST['Schakel']==572){xcache_set('Heating',2);}}
-else if(isset($_POST['Setpoint'])){foreach($_POST as $key=>$value){$value=round($value,0);if(substr($key,0,5)=="Actie"){if(Udevice($_POST['Setpoint'],0,$value)=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$value.'<br/>ERROR</div>';else xcache_set('setpoint'.$_POST['Setpoint'],2);}}}
+if(isset($_POST['Schakel'])){if(Schakel($_POST['Schakel'],$_POST['Actie'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>';if($_POST['Schakel']==572){$mc->set('Heating',2);}}
+else if(isset($_POST['Setpoint'])){foreach($_POST as $key=>$value){$value=round($value,0);if(substr($key,0,5)=="Actie"){if(Udevice($_POST['Setpoint'],0,$value)=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$value.'<br/>ERROR</div>';else $mc->set('setpoint'.$_POST['Setpoint'],2);}}}
 else if(isset($_POST['Udevice'])){if(Udevice($_POST['Udevice'])=='ERROR') echo '<div id="message" class="balloon">'.$_POST['Naam'].' '.$_POST['Actie'].'<br/>ERROR</div>'; }
 else if(isset($_POST['dimmer'])){
-	if(isset($_POST['dimlevelon_x'])) {if(Dim($_POST['dimmer'],100)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
-	else if(isset($_POST['dimleveloff_x'])) {if(Dim($_POST['dimmer'],0)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
-	else if(isset($_POST['dimsleep_x'])) {xcache_set('dimsleep'.$_POST['Naam'],$_POST['dimlevel']);}
-	else {if(Dim($_POST['dimmer'],$_POST['dimlevel'])=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';xcache_set('dimtime'.$_POST['Naam'],$time);xcache_set('dimsleep'.$_POST['Naam'],0);}
+	if(isset($_POST['dimlevelon_x'])) {if(Dim($_POST['dimmer'],100)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';$mc->set('dimtime'.$_POST['Naam'],$time);$mc->set('dimmer'.$_POST['Naam'],0);}
+	else if(isset($_POST['dimleveloff_x'])) {if(Dim($_POST['dimmer'],0)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';$mc->set('dimtime'.$_POST['Naam'],$time);$mc->set('dimmer'.$_POST['Naam'],0);}
+	else if(isset($_POST['dimsleep_x'])) {$mc->set('dimmer'.$_POST['Naam'],1);}
+	else if(isset($_POST['dimwake_x'])) {if(Dim($_POST['dimmer'],$_POST['dimwakelevel']+1)=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';$mc->set('dimmer'.$_POST['Naam'],2);}
+	else {if(Dim($_POST['dimmer'],$_POST['dimlevel'])=='ERROR') echo '<div id="message" class="balloon">Dimmer '.$_POST['Naam'].' level '.$_POST['dimlevel'].'<br/>ERROR</div>';$mc->set('dimtime'.$_POST['Naam'],$time);$mc->set('dimmer'.$_POST['Naam'],0);}
 	}
-else if(isset($_POST['Scene'])){if(Scene($_POST['Scene'])=='ERROR') echo '<div id="message" class="balloon">Scene '.$_POST['Naam'].' activeren'.'<br/>ERROR</div>';if($_POST['Scene']==5) xcache_set('dimtimeEettafel',$time);}
+else if(isset($_POST['Scene'])){if(Scene($_POST['Scene'])=='ERROR') echo '<div id="message" class="balloon">Scene '.$_POST['Naam'].' activeren'.'<br/>ERROR</div>';if($_POST['Scene']==5) $mc->set('dimtimeEettafel',$time);}
 if(isset($_POST['denon'])){$denon_address='http://192.168.0.2';$ctx=stream_context_create(array('http'=>array('timeout'=>2,)));
 	$denonmain=simplexml_load_string(file_get_contents($denon_address.'/goform/formMainZone_MainZoneXml.xml?_='.$time,false,$ctx));
 	$denonmain=json_encode($denonmain);$denonmain=json_decode($denonmain,TRUE);usleep(10000);
@@ -55,11 +56,13 @@ if(isset($_POST['Schakel'])){
 	if($_POST['Schakel']==6||$_POST['Schakel']==48){
 		if($SRaamLiving=='Open') echo '<script language="javascript">alert("WARNING:Raam living open!")</script>';
 		if($SAchterdeur=='Open') echo '<script language="javascript">alert("WARNING:Achterdeur open!")</script>';
-		if($Spoort=='Open') echo '<script language="javascript">alert("WARNING:Poort open!")</script>';}}
+		if($Spoort=='Open') echo '<script language="javascript">alert("WARNING:Poort open!")</script>';
+	}
+}
 echo '<div style="position:absolute;top:5px;left:278px;width:130px;text-align:right;"><a href="" style="padding:4px 4px;font-size:33px;font-weight:500;text-align:right;letter-spacing:-2px" title="refresh">'.strftime("%k:%M:%S",$time).'</a></div>
 <div class="box" style="top:0px;height:306px;" >
-<div class="box2" style="top:240px;left:11px;" ><img src="images/'.xcache_get('weatherimg').'.png"/ width="60px" height="auto"></div>
-<div class="box2" style="top:290px;left:13px;background:rgba(222,222,222,0.8);" >'.xcache_get('averagerain').'</div>
+<div class="box2" style="top:240px;left:11px;" ><img src="images/'.$mc->get('weatherimg').'.png"/ width="60px" height="auto"></div>
+<div class="box2" style="top:290px;left:13px;background:rgba(222,222,222,0.8);" >'.$mc->get('averagerain').'</div>
 <div class="box" style="top:319px;height:505px;">
 <form method="POST"><input type="hidden" name="denon" value="up"><input type="image" src="images/arrowup.png" width="48px" height="48px"></form>
 <br/><form method="POST"><input type="hidden" name="denon" value="down"><input type="image" src="images/arrowdown.png" width="48px" height="48px"></form>
@@ -71,10 +74,11 @@ echo '<div style="position:absolute;top:5px;left:278px;width:130px;text-align:ri
 <a href="#" onclick="toggle_visibility(\'Plus\');" style="text-decoration:none"><img src="images/plus.png" width="60px" height="60px"/></a>
 </div>';
 
-
-
+Dimmer('Tobi',40,420,130); //kamer Tobi
 Dimmer('Zithoek',48,125,130);
 Dimmer('Eettafel',48,125,270);
+Dimmer('Kamer',40,550,350);
+Dimmer('Tobi',40,575,190); //kamer Julius
 Schakelaar('TV','TV',48,44,88);	
 Schakelaar('Denon','Amp',48,44,144);
 Schakelaar('Kodi','Kodi',36,50,196);	
@@ -85,14 +89,11 @@ Schakelaar('TVLed','Light',36,8,158);
 Schakelaar('Lamp_Bureel','Light',36,8,214);
 Schakelaar('Licht_Inkom','Light',40,60,360);
 Schakelaar('Keuken','Light',48,157,390);
-//Schakelaar('Keuken','Light',30,150,340); //gootsteen
-//Schakelaar('Tuin','Light',30,115,375); //fornuis
-//Schakelaar('Werkblad','Light',30,216,420); //werkblad
+Schakelaar('Wasbak','Light',30,150,340); //gootsteen
+Schakelaar('Kookplaat','Light',30,115,375); //fornuis
+Schakelaar('Werkblad','Light',30,216,420); //werkblad
 Schakelaar('LichtBadkamer1','Light',40,440,368); //badkamer
 Schakelaar('LichtBadkamer2','Light',20,480,348); //badkamer
-//Schakelaar('Keuken','Light',40,550,350); //kamer
-Schakelaar('Tobi','Light',40,420,131); //kamer Tobi
-//Schakelaar('Keuken','Light',40,575,170); //kamer Julius
 Schakelaar('Licht_Voordeur','Light',40,60,441);
 Schakelaar('Licht_Hall','Light',42,416,252);	
 Schakelaar('Licht_Hall_Auto','Clock',36,420,299);		
@@ -105,6 +106,7 @@ Schakelaar('Slapen','Sleepy',48,335,428);
 Schakelaar('Terras','Light',48,13,15);
 Schakelaar('Terras','Light',48,77,15);
 Schakelaar('Brander','Fire',48,765,260);
+Schakelaar('Kerstboom','Kerstboom',48,164,88);
 Schakelaar('Licht_Zolder','Light',48,705,260);
 Schakelaar('Bureel_Tobi','Plug',36,780,380);
 Thermometer('Buiten',110,140,17);
@@ -156,7 +158,7 @@ if($SRaamKamer!='Closed') echo '<div style="position:absolute;top:586px;left:481
 if($SDeurBadkamer!='Closed') echo '<div style="position:absolute;top:421px;left:341px;width:7px;height:46px;background:rgba(255,0,0,1);z-index:-10;"></div>';
 if($SBureel_Tobi!='Off') echo'<div style="position:absolute;top:800px;left:425px;width:50px;cursor:pointer;text-align:center;">'.$PP_Bureel_Tobi.'</div>';
 
-//$execution= microtime(true)-$start;$phptime=$execution-$domotime;echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:left;font-size:12px" >D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'<br/>';print_r($_POST);echo '</div>';
+$execution= microtime(true)-$start;$phptime=$execution-$domotime;echo '<div style="position:absolute;top:652px;left:90px;width:400px;text-align:left;font-size:12px" >D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'<br/>';print_r($_POST);echo '</div>';
 
 } else echo '<div style="background:#ddd;"><a href="">Geen verbinding met Domoticz</a></div>';	
 } else {header("Location:index.php");die("Redirecting to:index.php");}

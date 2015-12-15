@@ -28,7 +28,7 @@ h2{font-size:12px}
 <body>
 <?php
 $denon_address = 'http://192.168.0.2';
-if($authenticated) {
+if(isset($_COOKIE["HomeEgregius"])) {
 if(isset($_POST['action'])) {
 	file_get_contents($denon_address.'/'.$_POST['action']);
 	if(substr($_POST['action'],28,15) == 'PutSurroundMode' || substr($_POST['action'],28,15) == 'PutZone_InputFu') {
