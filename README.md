@@ -64,15 +64,28 @@ All other devices are stored with S:
 
 ##The Functions secure/functions.php
 ###ios($msg)
+Sends $msg to your iOS device. Messages are delivered with high priority. That means that they make sound even when iPhone is on silent or 'do not disturb' mode
 ###sms($msg)
+Sends $msg thru Clickatells SMS gateway
 ###telegram($msg)
+Sends $msg using telegram bot
 ###Schakel($idx,$cmd)
+Switches $idx. $cmd mostly 'On' or 'Off'.
 ###Scene($idx)
+Activates scene $idx
 ###Dim($idx,$level)
+Set dimlevel of dimmer $idx to $level
 ###Udevice($idx, $nvalue, $svalue)
+Updates device $idx with $nvalue and $svalue
 ###Textdevice($idx,$text)
+Updates textdevice $idx with $text
 ###percentdevice($idx,$value)
+Updates percetage device $idx with $value
 ###voorwarmen($temp, $settemp,$seconds)
+Calculates a time period depending on $temp and $settemp multiplied by $seconds per degree
 ###setradiator($temp,$setpoint)
+Calculates the setpoint for a radiatorvalve depending on current room temperature $temp and desired $setpoint. Ex: Room temperature = 19°, setpoint = 20° -> Set valve to 24°.
 ###RefreshZwave($node)
+'Refreshes' the zwave $node. I like to call this custom polling.
 ###pingDomain($domain, $port)
+Check availability of $port at $domain (pinger or system alive checker)
