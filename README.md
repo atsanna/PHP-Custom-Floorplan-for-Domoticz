@@ -19,10 +19,10 @@ On the left side: from top to bottom:
 On the plan we see all thermometers, setpoints, radiator valves, smoke detectors, lights, open doors, open port, timestamp of motion sensors,...
 With the green home button and the sleepy smiley I switch the system in states 'Home/Away' or 'Sleeping'. Depending on those states lots of things happen in the cron script.  
 
-##The script 'hw2domoticz.php':
+##The script secure/hw2domoticz.php:
 Can be used to import the Smartwares weather sensors wich are connected to a Homewizard. 
 
-##The script 'cron.php':
+##The script secure/cron.php:
 Since the script is programmed in PHP there aren't any limitations, only your skills and imagination. 
 I execute the script by cron every minute.  
 Some things this script does for me:
@@ -54,6 +54,25 @@ Create a cron job with 'sudo crontab -e'. When the option 'all' is added more st
 </pre>
 
 ##The variables
+All switch states, thermometers are stored in variables. Here's a list of used variables, note that 'name' is the name of device in domoticz, converted to lowercase.
+- Tname = temperature, TIname = IDX of thermometer, TTname = last timestamp
+- Dname = state of dimmer, Dlevelname = Dimlevel of dimmer, DIname = IDX of dimmer, DTname = last timestamp of dimmer
+- Uname = power usage
+- Rname = radiator valve or setpoint value, RIname = IDX of device, RTname = last timestamp
+All other devices are stored with S:
+- Sname = switch state, SIname = IDX of device, STname = last timestamp
 
-##The Functions
-###ios()
+##The Functions secure/functions.php
+###ios($msg)
+###sms($msg)
+###telegram($msg)
+###Schakel($idx,$cmd)
+###Scene($idx)
+###Dim($idx,$level)
+###Udevice($idx, $nvalue, $svalue)
+###Textdevice($idx,$text)
+###percentdevice($idx,$value)
+###voorwarmen($temp, $settemp,$seconds)
+###setradiator($temp,$setpoint)
+###RefreshZwave($node)
+###pingDomain($domain, $port)
