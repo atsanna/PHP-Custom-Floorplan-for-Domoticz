@@ -19,11 +19,11 @@ On the left side: from top to bottom:
 On the plan we see all thermometers, setpoints, radiator valves, smoke detectors, lights, open doors, open port, timestamp of motion sensors,...
 With the green home button and the sleepy smiley I switch the system in states 'Home/Away' or 'Sleeping'. Depending on those states lots of things happen in the cron script.  
 
-Dimmers are controlled by buttons: Instant On/off or a % value. 
-Also a wake and sleep function is available. These dims the light slowly on or off. 
+Dimmers are controlled by buttons: Instant On/off or a % value. <br>
+Also a wake and sleep function is available. These dims the light slowly on or off. <br>
 <img src="http://i.imgur.com/EaWXP91.png"/><br>
 
-Setpoints are controlled by buttons. Current room temperature is shown and current setpoint is marked in green.
+Setpoints are controlled by buttons. Current room temperature is shown and current setpoint is marked in green.<br>
 <img src="http://i.imgur.com/0EVOxUb.png"/><br>
 
 
