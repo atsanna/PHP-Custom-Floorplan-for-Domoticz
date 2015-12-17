@@ -4,7 +4,7 @@ Goal: Using 1 page to view and control everything from my domoticz installation 
 Requirements: PHP enabled webserver, I use Apache on the same RPi. memcached recommended for storing timestamps of sent notifications and other temporary variables.
 Authentication in Domoticz must be disabled for 127.0.0.1
 
-##The page:<br>
+##The Floorplan:<br>
 <img src="http://i.imgur.com/09PpGwB.png"/><br>
 The page fits perfect on a iPhone5 and can be added on startscreen as an application for full screen viewing.
 It's built by using a background image with the layout of the house, on top of that lot's of fixed positioned DIVs.
@@ -17,37 +17,43 @@ On the left side: from top to bottom:
 - Arrows to control volume of my Denon amplifier
 - Buttons for scenes/groups like 'Listening to radio', 'Watch TV', 'Watch Kodi', 'Diner' and 'Switch everything off'.
 On the plan we see all thermometers, setpoints, radiator valves, smoke detectors, lights, open doors, open port, timestamp of motion sensors,...
-With the green home button and the sleepy smiley I switch the system in states 'Home/Away' or 'Sleeping'. Depending on those states lots of things happen in the script.  
+With the green home button and the sleepy smiley I switch the system in states 'Home/Away' or 'Sleeping'. Depending on those states lots of things happen in the cron script.  
 
 ##The script 'hw2domoticz.php':
-The first goal of this script was to import the Smartwares weather sensors wich are connected to a Homewizard. Very soon I started using it for all kinds of other stuff. 
+Can be used to import the Smartwares weather sensors wich are connected to a Homewizard. 
+
+##The script 'cron.php':
 Since the script is programmed in PHP there aren't any limitations, only your skills and imagination. 
-I execute the script by cron every minute. The script itself runs 12 times in a loop. So reaction time is 5 seconds. This number is easily adjustable, could be that a higher rate is possible now I have the variables in domoticz instead of a seperate SQLite database. 
+I execute the script by cron every minute.  
 Some things this script does for me:
-- Switching off lights after x seconds of movement
+- Switching off lights after x minutes of no movement
 - Switch everything off when away or a sleep
 - Controls heating
 - Sends alerts with telegram, sms or with high priority to iOS. Alerts can be anything like 'Movement detected in living room' while not at home to 'Watch out, bedroom is 10° hotter than rest of the house'.
-- Import homewizard data
+- Read Google Calendar
 - ...
 
 ##Installation:
-
 Place the files on a PHP enabled webserver. Protect the secure folder for external access. 
 Adjust variables in secure/functions.php
 
-in secure/functions.php you'll see this:
+in secure/functions.php you'll see this; it's up to you to create something for authentication (or don't publish on the net).
 <pre>$authenticated = false;
 $authenticated = true;</pre><br/>
-It's up to you to create something for authentication (or don't publish on the net).
 
-If you put this in /home/pi/domoticz/scripts/domoticz_main you'll have instant reaction of the hw2domoticz script.
+
+If you put this in /home/pi/domoticz/scripts/domoticz_main you'll have instant reaction of the cron script.
 <pre>
 #!/bin/sh
 /var/www/secure/cron.php
 </pre><br>
 
-Create a cron job with 'sudo crontab -e'
+Create a cron job with 'sudo crontab -e'. When the option 'all' is added more stuf is done. Without it it only runs time critical things like switching lights on when movement is detected. 
 <pre>
 * * * * * /var/www/secure/cron.php all >/dev/null 2>&1
 </pre>
+
+##The variables
+
+##The Functions
+###ios()
