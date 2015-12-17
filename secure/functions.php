@@ -13,12 +13,12 @@ $smsuser = '***';
 $smspassword = '***';
 $smsapi = 12345678;
 $smstofrom = 32123456789;
+$calendarId = 'primary';
 
 $authenticated = true;
 
 setlocale(LC_ALL,'nl_NL.UTF-8');setlocale(LC_ALL, 'nld_nld');date_default_timezone_set('Europe/Brussels');$time=time();
 $mc = new Memcached();$mc->addServer("localhost", 11211);
-
 function ios($msg) {global $appleid,$applepass,$appledevice;include ("findmyiphone.php");$fmi=new FindMyiPhone($appleid,$applepass);$fmi->playSound($appledevice,$msg);sleep(2);}
 function sms($msg,$device) {file_get_contents('http://api.clickatell.com/http/sendmsg?user='.$smsuser.'&password='.$smspassword.'&api_id='.$smsapi.'&to='.$smstofrom.'&text='.urlencode($msg).'&from='.$smstofrom.'');}
 function domlog($msg) {global $domoticzurl;file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));usleep(50000);}

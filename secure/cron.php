@@ -1,9 +1,10 @@
+#!/usr/bin/php
 <?php $start=microtime(true);
 $authenticated=false;
 include "functions.php";
 if($authenticated) {error_reporting(E_ALL);ini_set("display_errors", "on");}
 $time=$_SERVER['REQUEST_TIME'];$timeout=$time-170;
-isset($_GET['all'])?$all=true:$all=false;
+isset($_GET['all'])||isset($argv[1])?$all=true:$all=false;
 $domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&used=true&plan=5'),true);
 if($all) $domoticz=json_decode(file_get_contents($domoticzurl.'type=devices&used=true'),true);
 $domotime=microtime(true)-$start;
@@ -12,7 +13,7 @@ if($domoticz) {
 		isset($dom['Type'])?$Type=$dom['Type']:$Type='None';
 		isset($dom['SwitchType'])?$SwitchType=$dom['SwitchType']:$SwitchType='None';
 		isset($dom['SubType'])?$SubType=$dom['SubType']:$SubType='None';
-		$name=$dom['Name'];
+		$name=strtolower($dom['Name']);
 		if($Type=='Temp'){${'T'.$name}=$dom['Temp'];${'TI'.$name}=$dom['idx'];${'TT'.$name}=strtotime($dom['LastUpdate']);}
 		else if($SwitchType=='Dimmer'){${'DI'.$name}=$dom['idx'];$dom['Status']=='Off'?${'D'.$name}='Off':${'D'.$name}='On';$dom['Status']=='Off'?${'Dlevel'.$name}=0:${'Dlevel'.$name}=$dom['Level'];${'DT'.$name}=strtotime($dom['LastUpdate']);}
 		else if($Type=='Usage'&&$dom['SubType']=='Electric') ${'P'.$name}=substr($dom['Data'],0,-5);
@@ -31,83 +32,63 @@ if($domoticz) {
 	$vijfsec=$time-5;$eenmin=$time-55;$tweemin=$time-115;$driemin=$time-175;$vijfmin=$time-295;$halfuur=$time-1795;$eenuur=$time-3595;$tweeuur=$time-7195;$drieuur=$time-10795;
 	
 	//Automatische lichten inschakelen
-	if($SThuis=='On') {
-		if($SSlapen=='Off') {
-			if(($SPIR_Garage!='Off'||$Spoort!='Closed')&&$SLicht_Garage=='Off'&&$SLicht_Garage_Auto=='On') Schakel($SILicht_Garage, 'On');
-			if($SPIR_Inkom!='Off'&&$SLicht_Inkom=='Off'&&$SLicht_Hall_Auto=='On') {Schakel($SILicht_Inkom, 'On');Schakel($SILicht_Hall, 'On');} 
-			if($SPIR_Hall!='Off'&&($SLicht_Hall=='Off'||$SLicht_Inkom=='Off')&&$SLicht_Hall_Auto=='On') {Schakel($SILicht_Hall, 'On');Schakel($SILicht_Inkom, 'On');}
-			if($SPIR_Living!='Off'&&$STV=='Off'&&$SDenon=='Off'&&$SLamp_Bureel=='Off'&&$SLicht_Hall_Auto=='On'&&$DEettafel=='Off') {
-				if($SWerkblad!='On') Schakel($SIWerkblad, 'On');
-				if($DEettafel<9) Dim($DIEettafel, 9);
-				if($SKerstboom=='Off') Schakel($SIKerstboom, 'On');
+	if($Sthuis=='On') {
+		if($Sslapen=='Off') {
+			if(($Spir_garage!='Off'||$Spoort!='Closed')&&$Slicht_garage=='Off'&&$Slicht_garage_auto=='On') Schakel($SIlicht_garage, 'On');
+			if($Spir_inkom!='Off'&&$Slicht_inkom=='Off'&&$Slicht_hall_auto=='On') {Schakel($SIlicht_inkom, 'On');Schakel($SIlicht_hall, 'On');} 
+			if($Spir_hall!='Off'&&($Slicht_hall=='Off'||$Slicht_inkom=='Off')&&$Slicht_hall_auto=='On') {Schakel($SIlicht_hall, 'On');Schakel($SIlicht_inkom, 'On');}
+			if($Spir_living!='Off'&&$Stv=='Off'&&$Sdenon=='Off'&&$Slamp_bureel=='Off'&&$Slicht_hall_auto=='On'&&$Deettafel=='Off') {
+				if($Swerkblad!='On') Schakel($SIwerkblad, 'On');
+				if($Deettafel<9) Dim($DIeettafel, 9);
+				if($Skerstboom=='Off') Schakel($SIkerstboom, 'On');
 				if($time > strtotime('6:00') && $time < strtotime('7:15')) {
 					shell_exec('wakeonlan 3c:07:54:22:34:17');
 					shell_exec('wakeonlan 00:11:32:2c:b7:21');
-					if($SiMac=='Off') Schakel($SIiMac, 'On');
-					if($SLamp_Bureel=='Off') Schakel($SILamp_Bureel, 'On');
+					if($Simac=='Off') Schakel($SIimac, 'On');
+					if($Slamp_bureel=='Off') Schakel($SIlamp_bureel, 'On');
 				}
 			}
-			if($SDeurBadkamer=='Open'&&$STDeurBadkamer>$time-10&&$STLichtBadkamer1<$time-60&&$SLichtBadkamer1!='On'&&$STLichtBadkamer2<$time-60&&$SLichtBadkamer2=='Off'&&$SLicht_Hall_Auto=='On') Schakel($SILichtBadkamer1, 'On');
-		} else if ($SSlapen=='On') {
-			if($SPIR_Inkom!='Off'&&$SLicht_Inkom=='Off'&&$SLicht_Hall_Auto=='On') Schakel($SILicht_Inkom, 'On');
-			if($SPIR_Hall!='Off'&&$SLicht_Inkom=='Off'&&$SLicht_Hall_Auto=='On') Schakel($SILicht_Inkom, 'On');
-			if($SDeurBadkamer=='Open'&&$STDeurBadkamer>$time-10&&$STLichtBadkamer2<$time-60&&$SLichtBadkamer2!='On'&&$STLichtBadkamer1<$time-60&&$SLichtBadkamer1=='Off') {
-				if($time > strtotime('6:00') && $time < strtotime('12:00')) Schakel($SILichtBadkamer1, 'On'); else Schakel($SILichtBadkamer2, 'On'); 
+			if($Sdeurbadkamer=='Open'&&$STdeurbadkamer>$time-10&&$STlichtbadkamer1<$time-60&&$Slichtbadkamer1!='On'&&$STlichtbadkamer2<$time-60&&$Slichtbadkamer2=='Off'&&$Slicht_hall_auto=='On') Schakel($SIlichtbadkamer1, 'On');
+		} else if ($Sslapen=='On') {
+			if($Spir_inkom!='Off'&&$Slicht_inkom=='Off'&&$Slicht_hall_auto=='On') Schakel($SIlicht_inkom, 'On');
+			if($Spir_hall!='Off'&&$Slicht_inkom=='Off'&&$Slicht_hall_auto=='On') Schakel($SIlicht_inkom, 'On');
+			if($Sdeurbadkamer=='Open'&&$STdeurbadkamer>$time-10&&$STlichtbadkamer2<$time-60&&$Slichtbadkamer2!='On'&&$STlichtbadkamer1<$time-60&&$Slichtbadkamer1=='Off') {
+				if($time > strtotime('6:00') && $time < strtotime('12:00')) Schakel($SIlichtbadkamer1, 'On'); else Schakel($SIlichtbadkamer2, 'On'); 
 			}
 		}
 	}
-	//KODI
-/*	if($SLicht_Hall_Auto=='On'&&$SKodi=='On'&&$STV=='On') {
-		$urltitle = urlencode('{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": [], "playerid": 1 }, "id": "VideoGetItem"}');
-		$urlspeed = urlencode('{"jsonrpc": "2.0", "method": "Player.GetProperties", "params": { "playerid": 1,"properties": ["speed"] }, "id": 1}');
-			$title = json_decode(curl('http://192.168.0.7:1597/jsonrpc?request='.$urltitle));
-			if(isset($title->result->item->label)) {
-				if($title->result->item->label!='') {
-					$speed = json_decode(curl('http://192.168.0.7:1597/jsonrpc?request='.$urlspeed));
-					if($speed->result->speed==0) {
-						if($DlevelZithoek<15) Dim($DIZithoek, 14);
-						if($DlevelEettafel<4) Dim($DIEettafel, 3);
-					} else {
-						if($DlevelZithoek == 15) Schakel($DIZithoek, 'Off');
-						if($DlevelEettafel == 4) Schakel($DIEettafel, 'Off');
-					}
-				}
-			} else {
-				if($DlevelZithoek<20) Dim($DIZithoek, 19);
-				if($DlevelEettafel<24) Dim($DIEettafel, 23);
-			}
-	}*/
-	//Meldingen
+	
+	//meldingen
 	$deurbel=false;
-	if(($SThuis=='Off'||$SSlapen=='On') && $STThuis<$timeout && $SMeldingen=='On') {
+	if(($Sthuis=='Off'||$Sslapen=='On') && $STthuis<$timeout && $Smeldingen=='On') {
 		if($Spoort!='Closed') {$msg='Poort open om '.strftime("%H:%M:%S", $STpoort);$deurbel=true;if($mc->get('alertpoort')<$time-60) {$mc->set('alertpoort', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
 		if($SAchterdeur!='Closed') {$msg='Achterdeur open om '.strftime("%H:%M:%S", $STAchterdeur);$deurbel=true;if($mc->get('alertAchterdeur')<$time-60) {$mc->set('alertAchterdeur', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
-		if($SRaamLiving!='Closed') {$msg='Raam Living open om '.strftime("%H:%M:%S", $STRaamLiving);$deurbel=true;if($mc->get('alertRaamLiving')<$time-60) {$mc->set('alertRaamLiving', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
-		if($SPIR_Garage!='Off'&&$STSlapen<$timeout) {$msg='Beweging gedecteerd in garage om '.strftime("%H:%M:%S", $STPIR_Garage);$deurbel=true;if($mc->get('alertPIR_Garage')<$time-60) {$mc->set('alertPIR_Garage', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
-		if($SPIR_Living!='Off'&&$STSlapen<$timeout) {$msg='Beweging gedecteerd in living om '.strftime("%H:%M:%S", $STPIR_Living);$deurbel=true;if($mc->get('alertPIR_Living')<$time-90) {$mc->set('alertPIR_Living', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
-		if($SPIR_Inkom!='Off'&&$STSlapen<$timeout) {$msg='Beweging gedecteerd in inkom om '.strftime("%H:%M:%S", $STPIR_Living);$deurbel=true;if($mc->get('alertPIR_Living')<$time-90) {$mc->set('alertPIR_Living', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
+		if($Sraamliving!='Closed') {$msg='raam living open om '.strftime("%H:%M:%S", $STraamliving);$deurbel=true;if($mc->get('alertraamliving')<$time-60) {$mc->set('alertraamliving', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
+		if($Spir_garage!='Off'&&$STslapen<$timeout) {$msg='Beweging gedecteerd in garage om '.strftime("%H:%M:%S", $STpir_garage);$deurbel=true;if($mc->get('alertpir_garage')<$time-60) {$mc->set('alertpir_garage', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
+		if($Spir_living!='Off'&&$STslapen<$timeout) {$msg='Beweging gedecteerd in living om '.strftime("%H:%M:%S", $STpir_living);$deurbel=true;if($mc->get('alertpir_living')<$time-90) {$mc->set('alertpir_living', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
+		if($Spir_inkom!='Off'&&$STslapen<$timeout) {$msg='Beweging gedecteerd in inkom om '.strftime("%H:%M:%S", $STpir_living);$deurbel=true;if($mc->get('alertpir_living')<$time-90) {$mc->set('alertpir_living', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
 	}
-	if($SThuis=='Off' && $STThuis<$timeout && $SMeldingen=='On') {
-		if($SPIR_Hall!='Off') {$msg='Beweging gedecteerd in hall om '.strftime("%H:%M:%S", $STPIR_Living);$deurbel=true;if($mc->get('telegramPIR_Hall')<$time-90) {$mc->set('alertAchterdeur', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
+	if($Sthuis=='Off' && $STthuis<$timeout && $Smeldingen=='On') {
+		if($Spir_hall!='Off') {$msg='Beweging gedecteerd in hall om '.strftime("%H:%M:%S", $STpir_living);$deurbel=true;if($mc->get('telegrampir_hall')<$time-90) {$mc->set('alertAchterdeur', $time);telegram($msg);ios($msg);if($sms==true) smd($msg);}}
 	}
-	if($SDeurbel!='Off') {$msg='Deurbel';if($mc->get('alertDeurbel')<$time-60) {$mc->set('alertDeurbel',$time);ios($msg);} Udevice($SIDeurbel,0,'Off');if($SLicht_Hall_Auto=='On') {Schakel($SILicht_Voordeur, 'On');$mc->set('BelLichtVoordeur',2);}}
-	if($deurbel&&$STDeurbel<$time-5) {schakel($SIDeurbel, 'On');Udevice($SIDeurbel, 0, 'Off');}
+	if($Sdeurbel!='Off') {$msg='Deurbel';if($mc->get('alertDeurbel')<$time-60) {$mc->set('alertDeurbel',$time);ios($msg);} Udevice($SIdeurbel,0,'Off');if($Slicht_hall_auto=='On') {Schakel($SIlicht_voordeur, 'On');$mc->set('Bellichtvoordeur',2);}}
+	if($deurbel&&$STdeurbel<$time-5) {schakel($SIdeurbel, 'On');Udevice($SIdeurbel, 0, 'Off');}
 	
 	//Refresh Zwave node
-	//if($STTV>$eenmin||$STSubwoofer>$eenmin||$STLamp_Bureel>$eenmin) RefreshZwave(61);
-	if($STLichtTerrasGarage>$vijfsec) RefreshZwave(16);
-	if($STLichtHallZolder>$vijfsec) RefreshZwave(20);
-	if($STLichtInkomVoordeur>$vijfsec) RefreshZwave(23);
-	if($STKeukenZolder>$vijfsec) RefreshZwave(56);
-	if($STWerkbladTuin>$vijfsec) RefreshZwave(68);
-	if($STWasbakKookplaat>$vijfsec) RefreshZwave(69);
-	if($STLichtBadkamer>$vijfsec) RefreshZwave(65); 
+	//if($STtv>$eenmin||$STsubwoofer>$eenmin||$STlamp_bureel>$eenmin) RefreshZwave(61);
+	if($STlichtterrasgarage>$vijfsec) RefreshZwave(16);
+	if($STlichthallzolder>$vijfsec) RefreshZwave(20);
+	if($STlichtinkomvoordeur>$vijfsec) RefreshZwave(23);
+	if($STkeukenzolder>$vijfsec) RefreshZwave(56);
+	if($STwerkbladtuin>$vijfsec) RefreshZwave(68);
+	if($STwasbakkookplaat>$vijfsec) RefreshZwave(69);
+	if($STlichtbadkamer>$vijfsec) RefreshZwave(65); 
 
 if($all) {
 	if($mc->get('domoticzconnection')!=1) {$mc->set('domoticzconnection',1); if(date('G')!=3) telegram('Verbinding met Domoticz hersteld');}
-	//Meldingen
-	if($SMeldingen=='On') {
-		$thermometers=array('Living','Badkamer','KamerTobi','KamerJulius','Zolder');
+	//meldingen
+	if($Smeldingen=='On') {
+		$thermometers=array('living','badkamer','kamertobi','kamerjulius','zolder');
 		$avg=0;
 		foreach($thermometers as $thermometer) $avg=$avg+${'T'.$thermometer};
 		$avg=$avg / 6;
@@ -115,93 +96,93 @@ if($all) {
 			if(${'T'.$thermometer}>$avg + 5 && ${'T'.$thermometer} > 25) {$msg='T '.$thermometer.'='.${'T'.$thermometer}.'°C. AVG='.round($avg,1).'°C';
 				if($mc->get('alerttemp'.$thermometer)<$time-600) {telegram($msg);ios($msg);if($sms==true) sms($msg);$mc->set('alerttemp'.$thermometer, $time);}
 			}
-			if(${'SSD'.$thermometer}!='Off') {$msg='Rook gedecteerd in '.$thermometer.'!';telegram($msg);ios($msg);if($sms==true) sms($msg);}
+			if(${'Ssd'.$thermometer}!='Off') {$msg='Rook gedecteerd in '.$thermometer.'!';telegram($msg);ios($msg);if($sms==true) sms($msg);}
 		}
-		if($PP_Bureel_Tobi>500) {if($mc->get('alertpowerbureeltobi')<$halfuur) {$msg='Verbruik bureel Tobi='.$PP_Bureel_Tobi;telegram($msg);$mc->set('alertpowerbureeltobi', $time);}}
+		if($Pp_bureel_tobi>500) {if($mc->get('alertpowerbureeltobi')<$halfuur) {$msg='Verbruik bureel tobi='.$Pp_bureel_tobi;telegram($msg);$mc->set('alertpowerbureeltobi', $time);}}
 	}
 	
 	//Sleep dimmers
-	$dimmers = array('Eettafel','Zithoek','Tobi','Kamer');
+	$dimmers = array('eettafel','zithoek','tobi','kamer');
 	foreach($dimmers as $dimmer) {
 		if(${'D'.$dimmer}!='Off') {
 			$action = $mc->get('dimmer'.$dimmer);
 			if($action == 1) {
-				$level = floor(${'Dlevel'.$dimmer}*0.8);
+				$level = floor(${'Dlevel'.$dimmer}*0.95);
 				Dim(${'DI'.$dimmer},$level);
 				if($level==0) $mc->set('dimmer'.$dimmer,0);
-			} else if($action == 2) {
+			} else if($action == 2&&date('i')%2==1) {
 				echo $dimmer;
 				$level = ${'Dlevel'.$dimmer}+1;
-				if($level>25) $level = 25;
+				if($level>30) $level = 30;
 				Dim(${'DI'.$dimmer},$level);
-				if($level==25) $mc->set('dimmer'.$dimmer,0);
+				if($level==30) $mc->set('dimmer'.$dimmer,0);
 			} 
 		}
 	}
 	
-	//Heating on/off
-	if($SThuis=='Off') {if($SHeating!='Off'&&$STHeating<$eenuur) {Schakel($SIHeating, 'Off');$SHeating = 'Off';}
-	} else {if($SHeating!='On') {Schakel($SIHeating, 'On');$SHeating = 'On';}}
+	//heating on/off
+	if($Sthuis=='Off') {if($Sheating!='Off'&&$STheating<$eenuur) {Schakel($SIheating, 'Off');$Sheating = 'Off';}
+	} else {if($Sheating!='On') {Schakel($SIheating, 'On');$Sheating = 'On';}}
 	
 	// 0 = auto, 1 = voorwarmen, 2 = manueel
-	//Living
+	//living
 	$Set=16.0;
-	$setpointLiving = $mc->get('setpoint130');
-	if($setpointLiving!=0 && $RTLiving < $tweeuur) {$mc->set('setpoint130',0);$setpointLiving=0;}
-	if($setpointLiving!=2) {
-		if($TBuiten<20 && $SHeating=='On' && $SRaamLiving=='Closed') {
-				$voorwarmen = voorwarmen($TLiving,20,60);
-			     if($time>=( strtotime('6:20')-$voorwarmen) && $time < strtotime('8:30')) $SSlapen=='Off'?$Set=19.0:$Set=18.0;
-			else if($time>=( strtotime('8:30')-$voorwarmen) && $time < strtotime('19:00')) $SSlapen=='Off'?$Set=20.0:$Set=18.0;
-			else if($time>=(strtotime('19:00')-$voorwarmen) && $time < strtotime('22:00')) $SSlapen=='Off'?$Set=20.0:$Set=18.0;
+	$setpointliving = $mc->get('setpoint130');
+	if($setpointliving!=0 && $RTliving < $tweeuur) {$mc->set('setpoint130',0);$setpointliving=0;}
+	if($setpointliving!=2) {
+		if($Tbuiten<20 && $Sheating=='On' && $Sraamliving=='Closed') {
+				$voorwarmen = voorwarmen($Tliving,20,60);
+			     if($time>=( strtotime('6:20')-$voorwarmen) && $time < strtotime('8:30')) $Sslapen=='Off'?$Set=19.0:$Set=18.0;
+			else if($time>=( strtotime('8:30')-$voorwarmen) && $time < strtotime('19:00')) $Sslapen=='Off'?$Set=20.0:$Set=18.0;
+			else if($time>=(strtotime('19:00')-$voorwarmen) && $time < strtotime('22:00')) $Sslapen=='Off'?$Set=20.0:$Set=18.0;
 		}
-		if($RLiving != $Set) {Udevice($RILiving,0,$Set);}
-		if($RTLiving < $drieuur) Udevice($RILiving,0,$Set);
+		if($Rliving != $Set) {Udevice($RIliving,0,$Set);}
+		if($RTliving < $drieuur) Udevice($RIliving,0,$Set);
 	}
-	$Set = setradiator($TLiving, $RLiving);
-	if($RLivingZZ!=$Set) {Udevice($RILivingZZ, 0, $Set);}
-	if($RLivingZE!=$Set) {Udevice($RILivingZE, 0, $Set);}
-	if($RLivingZB!=$Set) {Udevice($RILivingZB, 0, $Set);}
+	$Set = setradiator($Tliving, $Rliving);
+	if($Rlivingzz!=$Set) {Udevice($RIlivingzz, 0, $Set);}
+	if($Rlivingze!=$Set) {Udevice($RIlivingze, 0, $Set);}
+	if($Rlivingzb!=$Set) {Udevice($RIlivingzb, 0, $Set);}
 	
-	//Badkamer
+	//badkamer
 	$Set=17.0;
-	$setpointBadkamer = $mc->get('setpoint111');
-	if($setpointBadkamer!=0 && $RTBadkamer < $eenuur) {$mc->set('setpoint111',0);$setpointBadkamer=0;}
-	if($setpointBadkamer!=2) {
-		if($TBuiten<21 && $SHeating=='On') {
-			$voorwarmen = voorwarmen($TBadkamer,22,140);
+	$setpointbadkamer = $mc->get('setpoint111');
+	if($setpointbadkamer!=0 && $RTbadkamer < $eenuur) {$mc->set('setpoint111',0);$setpointbadkamer=0;}
+	if($setpointbadkamer!=2) {
+		if($Tbuiten<21 && $Sheating=='On') {
+			$voorwarmen = voorwarmen($Tbadkamer,22,140);
 			if(in_array(date('N',$time), array(1,2,3,4,5)) && $time>=(strtotime('6:00')-$voorwarmen) && $time<=(strtotime('7:20'))) $Set=21.0;
 		     else if(in_array(date('N',$time), array(6,7)) && $time>=(strtotime('7:30')-$voorwarmen) && $time<=(strtotime('9:30'))) $Set=20.0;
 		}
-		if($SDeurBadkamer!='Closed' && $STDeurBadkamer < $time - 180) $Set=14.0;
-		if($RBadkamer != $Set) {Udevice($RIBadkamer,0,$Set);$RBadkamer=$Set;}
-		if($RTBadkamer < $drieuur) Udevice($RIBadkamer,0,$Set);
+		if($Sdeurbadkamer!='Closed' && $STdeurbadkamer < $time - 180) $Set=14.0;
+		if($Rbadkamer != $Set) {Udevice($RIbadkamer,0,$Set);$Rbadkamer=$Set;}
+		if($RTbadkamer < $drieuur) Udevice($RIbadkamer,0,$Set);
 	}
-	$Set = setradiator($TBadkamer, $RBadkamer);
+	$Set = setradiator($Tbadkamer, $Rbadkamer);
 	if(in_array(date('N',$time), array(1,2,3,4,5)) && in_array(date('G',$time), array(4,5,6)) && $Set < 21) $Set = 21.0;
-	if($RBadkamerZ!=$Set) {Udevice($RIBadkamerZ,0,$Set);}
+	if($Rbadkamerz!=$Set) {Udevice($RIbadkamerz,0,$Set);}
 	
 	//Slaapkamer
 	$Set = 8.0;
-	$setpointKamer = $mc->get('setpoint97');
-	if($setpointKamer!=0 && $RTKamer < $eenuur) {$mc->set('setpoint97',0);$setpointKamer=0;}
-	if($setpointKamer!=2) {
-		if($TBuiten<15 && $SRaamKamer=='Closed' && $SHeating=='On' ) {
+	$setpointkamer = $mc->get('setpoint97');
+	if($setpointkamer!=0 && $RTkamer < $eenuur) {$mc->set('setpoint97',0);$setpointkamer=0;}
+	if($setpointkamer!=2) {
+		if($Tbuiten<15 && $Sraamkamer=='Closed' && $Sheating=='On' ) {
 			$Set = 14.0;
 			if($time < strtotime('8:00') || $time > strtotime('20:00')) $Set = 16.0;
 		}
 	}
-	if($RKamer != $Set) {Udevice($RIKamer,0,$Set);$RKamer=$Set;}
-	if($RTKamer < $drieuur) Udevice($RIKamer,0,$Set);
-	$Set = setradiator($TKamer, $RKamer);
-	if($RKamerZ!=$Set) {Udevice($RIKamerZ,0,$Set);}
+	if($Rkamer != $Set) {Udevice($RIkamer,0,$Set);$Rkamer=$Set;}
+	if($RTkamer < $drieuur) Udevice($RIkamer,0,$Set);
+	$Set = setradiator($Tkamer, $Rkamer);
+	if($Rkamerz!=$Set) {Udevice($RIkamerz,0,$Set);}
 	
-	//Slaapkamer Tobi
+	//Slaapkamer tobi
 	$Set = 8.0;
-	$setpointKamerTobi = $mc->get('setpoint548');
-	if($setpointKamerTobi!=0 && $RTKamerTobi < $eenuur) {$mc->set('setpoint549',0);$setpointKamerTobi=0;}
-	if($setpointKamerTobi!=2) {
-		if($TBuiten<15 && $SRaamKamerTobi=='Closed' && $SHeating=='On') {
+	$setpointkamertobi = $mc->get('setpoint548');
+	if($setpointkamertobi!=0 && $RTkamertobi < $eenuur) {$mc->set('setpoint549',0);$setpointkamertobi=0;}
+	if($setpointkamertobi!=2) {
+		if($Tbuiten<15 && $Sraamkamertobi=='Closed' && $Sheating=='On') {
 			$Set = 14.0;
 			if (date('W')%2==1) {
 					 if (date('N') == 3) { if($time > strtotime('20:00')) $Set = 16.0;}
@@ -215,133 +196,133 @@ if($all) {
 			//if($time < strtotime('8:00') || $time > strtotime('20:00')) $Set = 16.0;
 		}
 	}
-	if($RKamerTobi != $Set) {Udevice($RIKamerTobi,0,$Set);$RKamerTobi=$Set;}
-	if($RTKamerTobi < $time - 8600) Udevice($RIKamerTobi,0,$Set);
-	$Set = setradiator($TKamerTobi, $RKamerTobi);
-	if($RKamerTobiZ!=$Set) {Udevice($RIKamerTobiZ,0,$Set);}
+	if($Rkamertobi != $Set) {Udevice($RIkamertobi,0,$Set);$Rkamertobi=$Set;}
+	if($RTkamertobi < $time - 8600) Udevice($RIkamertobi,0,$Set);
+	$Set = setradiator($Tkamertobi, $Rkamertobi);
+	if($Rkamertobiz!=$Set) {Udevice($RIkamertobiz,0,$Set);}
 	
-	//Slaapkamer Julius
+	//Slaapkamer julius
 	$Set = 8.0;
-	$setpointKamerJulius = $mc->get('setpoint549');
-	if($setpointKamerJulius!=0 && $RTKamerJulius < $eenuur) {$mc->set('setpoint549',0);$setpointKamerJulius=0;}
-	if($setpointKamerJulius!=2) {
-		if($TBuiten<15 && $SRaamKamerJulius=='Closed' && $SHeating=='On') {
+	$setpointkamerjulius = $mc->get('setpoint549');
+	if($setpointkamerjulius!=0 && $RTkamerjulius < $eenuur) {$mc->set('setpoint549',0);$setpointkamerjulius=0;}
+	if($setpointkamerjulius!=2) {
+		if($Tbuiten<15 && $Sraamkamerjulius=='Closed' && $Sheating=='On') {
 			$Set = 14.0;
 		}
 	}
-	if($RKamerJulius != $Set) {Udevice($RIKamerJulius,0,$Set);$RKamerJulius=$Set;}
-	if($RTKamerJulius < $time - 8600) Udevice($RIKamerJulius,0,$Set);
-	$Set = setradiator($TKamerJulius, $RKamerJulius);
-	if($RKamerJuliusZ!=$Set) {Udevice($RIKamerJuliusZ,0,$Set);}
+	if($Rkamerjulius != $Set) {Udevice($RIkamerjulius,0,$Set);$Rkamerjulius=$Set;}
+	if($RTkamerjulius < $time - 8600) Udevice($RIkamerjulius,0,$Set);
+	$Set = setradiator($Tkamerjulius, $Rkamerjulius);
+	if($Rkamerjuliusz!=$Set) {Udevice($RIkamerjuliusz,0,$Set);}
 	
-	//Brander
-	if(($TLiving < $RLiving || $TBadkamer < $RBadkamer || $TKamer < $RKamer || $TKamerTobi < $RKamerTobi || $TKamerJulius < $RKamerJulius ) && $SBrander == "Off" && $STBrander < $time-250) Schakel($SIBrander, 'On');
-	if($TLiving >= $RLiving-0.2 && $TBadkamer >= $RBadkamer-0.4 && $TKamer >= $RKamer-0.2 && $TKamerTobi >= $RKamerTobi-0.2 && $TKamerJulius >= $RKamerJulius-0.2 && $SBrander == "On" && $STBrander < $time-250) Schakel($SIBrander, 'Off');
-	//if($STBrander<$time-600) Schakel($SIBrander, $SBrander);
+	//brander
+	if(($Tliving < $Rliving || $Tbadkamer < $Rbadkamer || $Tkamer < $Rkamer || $Tkamertobi < $Rkamertobi || $Tkamerjulius < $Rkamerjulius ) && $Sbrander == "Off" && $STbrander < $time-250) Schakel($SIbrander, 'On');
+	if($Tliving >= $Rliving-0.2 && $Tbadkamer >= $Rbadkamer-0.4 && $Tkamer >= $Rkamer-0.2 && $Tkamertobi >= $Rkamertobi-0.2 && $Tkamerjulius >= $Rkamerjulius-0.2 && $Sbrander == "On" && $STbrander < $time-250) Schakel($SIbrander, 'Off');
+	//if($STbrander<$time-600) Schakel($SIbrander, $Sbrander);
 	
-	//Subwoofer
-	if($SDenon=='On' && $SSubwoofer!='On')  Schakel($SISubwoofer,'On');
-	else if($SDenon=='Off'&& $SSubwoofer!='Off') Schakel($SISubwoofer,'Off');
+	//subwoofer
+	if($Sdenon=='On' && $Ssubwoofer!='On')  Schakel($SIsubwoofer,'On');
+	else if($Sdenon=='Off'&& $Ssubwoofer!='Off') Schakel($SIsubwoofer,'Off');
 	
 	//PIRS resetten
-	if($SPIR_Living!='Off'&&$STPIR_Living<$time-30) Schakel($SIPIR_Living,'Off');
-	if($SPIR_Garage!='Off'&&$STPIR_Garage<$timeout) Schakel($SIPIR_Garage,'Off');
-	if($SPIR_Inkom!='Off'&&$STPIR_Inkom<$timeout) Schakel($SIPIR_Inkom,'Off');
-	if($SPIR_Hall!='Off'&&$STPIR_Hall<$timeout) Schakel($SIPIR_Hall,'Off');
+	if($Spir_living!='Off'&&$STpir_living<$time-30) Schakel($SIpir_living,'Off');
+	if($Spir_garage!='Off'&&$STpir_garage<$timeout) Schakel($SIpir_garage,'Off');
+	if($Spir_inkom!='Off'&&$STpir_inkom<$timeout) Schakel($SIpir_inkom,'Off');
+	if($Spir_hall!='Off'&&$STpir_hall<$timeout) Schakel($SIpir_hall,'Off');
 	
 	//Automatische lichten uitschakelen
-	if($STLicht_Garage_Auto < $time-7200) {
-		if($time>$zonop+10800 && $time<$zononder-10800) {if($SLicht_Garage_Auto=='On' && $SLicht_Garage=='Off') Schakel($SILicht_Garage_Auto,'Off');}
-		else if($SLicht_Garage_Auto=='Off') Schakel($SILicht_Garage_Auto,'On');}
-	if($STLicht_Hall_Auto < $time-7200) {
-		if($time>$zonop+1800 && $time<$zononder-1800) {if($SLicht_Hall_Auto=='On' && $SLicht_Hall=='Off' && $SLicht_Inkom=='Off') Schakel($SILicht_Hall_Auto,'Off');}
-		else if($SLicht_Hall_Auto=='Off') Schakel($SILicht_Hall_Auto,'On');}
-	if($SPIR_Living=='Off'&&$STV=='Off'&&$SDenon=='Off'&&$DEettafel!='Off'&&$STPIR_Living<$time-600&&$DTEettafel<$time-600) Schakel($DIEettafel,'Off');
-	if($SPIR_Garage=='Off'&&$Spoort=='Closed'&&$STPIR_Garage<$time-180&&$STpoort<$timeout&&$STLicht_Garage<$time-60&&$SLicht_Garage=='On'&&$SLicht_Garage_Auto=='On') Schakel($SILicht_Garage,'Off');
-	if($STPIR_Inkom<$time-120&&$STPIR_Hall<$time-120&&$STLicht_Inkom<$time-60&&$STLicht_Hall<$time-60&&$SLicht_Hall_Auto=='On') {
-		if($SLicht_Inkom=='On') Schakel($SILicht_Inkom,'Off');
-		if($SLicht_Hall=='On') Schakel($SILicht_Hall,'Off');}
-	if($SLicht_Voordeur!='Off') {if($mc->get('BelLichtVoordeur')==2) Schakel($SILicht_Voordeur,'Off');} 
+	if($STlicht_garage_auto < $time-7200) {
+		if($time>$zonop+10800 && $time<$zononder-10800) {if($Slicht_garage_auto=='On' && $Slicht_garage=='Off') Schakel($SIlicht_garage_auto,'Off');}
+		else if($Slicht_garage_auto=='Off') Schakel($SIlicht_garage_auto,'On');}
+	if($STlicht_hall_auto < $time-7200) {
+		if($time>$zonop+1800 && $time<$zononder-1800) {if($Slicht_hall_auto=='On' && $Slicht_hall=='Off' && $Slicht_inkom=='Off') Schakel($SIlicht_hall_auto,'Off');}
+		else if($Slicht_hall_auto=='Off') Schakel($SIlicht_hall_auto,'On');}
+	if($Spir_living=='Off'&&$Stv=='Off'&&$Sdenon=='Off'&&$Deettafel!='Off'&&$STpir_living<$time-600&&$DTeettafel<$time-600) Schakel($DIeettafel,'Off');
+	if($Spir_garage=='Off'&&$Spoort=='Closed'&&$STpir_garage<$time-180&&$STpoort<$timeout&&$STlicht_garage<$time-60&&$Slicht_garage=='On'&&$Slicht_garage_auto=='On') Schakel($SIlicht_garage,'Off');
+	if($STpir_inkom<$time-120&&$STpir_hall<$time-120&&$STlicht_inkom<$time-60&&$STlicht_hall<$time-60&&$Slicht_hall_auto=='On') {
+		if($Slicht_inkom=='On') Schakel($SIlicht_inkom,'Off');
+		if($Slicht_hall=='On') Schakel($SIlicht_hall,'Off');}
+	if($Slicht_voordeur!='Off') {if($mc->get('Bellichtvoordeur')==2) Schakel($SIlicht_voordeur,'Off');} 
 	
-	//Slapen-niet thuis bij geen beweging
-	if($STPIR_Living<$time-14400&&$STPIR_Garage<$time-14400&&$STPIR_Inkom<$time-14400&&$STPIR_Hall<$time-14400&&$STSlapen<$time-14400&&$STThuis<$time-14400&&$SThuis=='On'&&$SSlapen=="Off") {Schakel($SISlapen,'On');telegram('Slapen ingeschakeld na 4 uur geen beweging');}
-	if($STPIR_Living<$time-43200&&$STPIR_Garage<$time-43200&&$STPIR_Inkom<$time-43200&&$STPIR_Hall<$time-43200&&$STSlapen<$time-28800&&$STThuis<$time-43200&&$SThuis=='On'&&$SSlapen=="On") {Schakel($SISlapen, 'Off');Schakel($SIThuis, 'Off');telegram('Thuis uitgeschakeld na 12 uur geen beweging');}
+	//slapen-niet thuis bij geen beweging
+	if($STpir_living<$time-14400&&$STpir_garage<$time-14400&&$STpir_inkom<$time-14400&&$STpir_hall<$time-14400&&$STslapen<$time-14400&&$STthuis<$time-14400&&$Sthuis=='On'&&$Sslapen=="Off") {Schakel($SIslapen,'On');telegram('slapen ingeschakeld na 4 uur geen beweging');}
+	if($STpir_living<$time-43200&&$STpir_garage<$time-43200&&$STpir_inkom<$time-43200&&$STpir_hall<$time-43200&&$STslapen<$time-28800&&$STthuis<$time-43200&&$Sthuis=='On'&&$Sslapen=="On") {Schakel($SIslapen, 'Off');Schakel($SIthuis, 'Off');telegram('thuis uitgeschakeld na 12 uur geen beweging');}
 	
-	//Laptop Pluto zonnepanelen
+	//Laptop pluto zonnepanelen
 	if($time > $zononder - 4000 && $time < $zononder + 4000) {
-		if($SPluto=='Off') Schakel($SIPluto, 'On');
+		if($Spluto=='Off') Schakel($SIpluto, 'On');
 	} else {
-		if($SPluto=='On') Schakel($SIPluto, 'Off');
+		if($Spluto=='On') Schakel($SIpluto, 'Off');
 	}
 	
-	//Lichten uitschakelen na X uur. 
+	//lichten uitschakelen na X uur. 
 	
-	if($DTobi!='Off'&&$DTTobi<$drieuur) Schakel($DITobi, 'Off');
-	if($SLicht_Garage!='Off'&&$STLicht_Garage<$tweeuur) Schakel($SILicht_Garage, 'Off');
-	if($SLicht_Voordeur!='Off'&&$STLicht_Voordeur<$tweeuur) Schakel($SILicht_Voordeur, 'Off');
-	if($SLicht_Hall!='Off'&&$STLicht_Hall<$tweeuur) Schakel($SILicht_Hall, 'Off');
-	if($SLicht_Inkom!='Off'&&$STLicht_Inkom<$tweeuur) Schakel($SILicht_Inkom, 'Off');
-	if($SKeuken!='Off'&&$STKeuken<$tweeuur) Schakel($SIKeuken, 'Off');
-	if($SWasbak!='Off'&&$STWasbak<$tweeuur) Schakel($SIWasbak, 'Off');
-	if($SKookplaat!='Off'&&$STKookplaat<$tweeuur) Schakel($SIKookplaat, 'Off');
-	if($SWerkblad!='Off'&&$STWerkblad<$tweeuur) Schakel($SIWerkblad, 'Off');
-	if($SZolderG!='Off'&&$STZolderG<$tweeuur) Schakel($SIZolderG, 'Off');
-	if($SLichtBadkamer1!='Off'&&$STLichtBadkamer1<$tweeuur) Schakel($SILichtBadkamer1, 'Off');
-	if($SLichtBadkamer2!='Off'&&$STLichtBadkamer2<$tweeuur) Schakel($SILichtBadkamer2, 'Off');
+	if($Dtobi!='Off'&&$DTtobi<$drieuur) Schakel($DItobi, 'Off');
+	if($Slicht_garage!='Off'&&$STlicht_garage<$tweeuur) Schakel($SIlicht_garage, 'Off');
+	if($Slicht_voordeur!='Off'&&$STlicht_voordeur<$tweeuur) Schakel($SIlicht_voordeur, 'Off');
+	if($Slicht_hall!='Off'&&$STlicht_hall<$tweeuur) Schakel($SIlicht_hall, 'Off');
+	if($Slicht_inkom!='Off'&&$STlicht_inkom<$tweeuur) Schakel($SIlicht_inkom, 'Off');
+	if($Skeuken!='Off'&&$STkeuken<$tweeuur) Schakel($SIkeuken, 'Off');
+	if($Swasbak!='Off'&&$STwasbak<$tweeuur) Schakel($SIwasbak, 'Off');
+	if($Skookplaat!='Off'&&$STkookplaat<$tweeuur) Schakel($SIkookplaat, 'Off');
+	if($Swerkblad!='Off'&&$STwerkblad<$tweeuur) Schakel($SIwerkblad, 'Off');
+	if($Szolderg!='Off'&&$STzolderg<$tweeuur) Schakel($SIzolderg, 'Off');
+	if($Slichtbadkamer1!='Off'&&$STlichtbadkamer1<$tweeuur) Schakel($SIlichtbadkamer1, 'Off');
+	if($Slichtbadkamer2!='Off'&&$STlichtbadkamer2<$tweeuur) Schakel($SIlichtbadkamer2, 'Off');
 		
-	//Meldingen inschakelen indien langer dan 12 uur uit. 
-	if($SMeldingen!='On' && $STMeldingen<$time-43200) Schakel($SIMeldingen, 'On');
+	//meldingen inschakelen indien langer dan 12 uur uit. 
+	if($Smeldingen!='On' && $STmeldingen<$time-43200) Schakel($SImeldingen, 'On');
 	
 	//KODI
-	if($SKodi=='On'&&$STKodi<$timeout) {
+	if($Skodi=='On'&&$STkodi<$timeout) {
 		$status = pingDomain('192.168.0.7', 1597);
-		if(is_int($status)) Schakel($SIKodi, 'Off');
+		if(is_int($status)) Schakel($SIkodi, 'Off');
 	}
-	//DiskStation
-	if($SDiskStation=='On'&&$STDiskStation<$timeout) {
+	//diskstation
+	if($Sdiskstation=='On'&&$STdiskstation<$timeout) {
 		$status = pingDomain('192.168.0.10', 1600);
 		if(is_int($status)) {
-			Schakel($SIDiskStation, 'Off');
+			Schakel($SIdiskstation, 'Off');
 			//telegram('Diskstion powered off');
 		}
-	} else if($SDiskStation=='Off' &&($SBureel_Tobi=='On'||$SKodi=='On'||$SiMac=='On')) {
+	} else if($Sdiskstation=='Off' &&($Sbureel_tobi=='On'||$Skodi=='On'||$Simac=='On')) {
 		shell_exec('wakeonlan 00:11:32:2c:b7:21');
 		//telegram('WOL sent to Diskstation');
 	}
 	
 	//Alles uitschakelen
-	if($SThuis=='Off'||$SSlapen=="On") {
-		if($STV!='Off'&&$STTV<$eenmin) Schakel($SITV, 'Off');
-		if($SKristal!='Off'&&$STKristal<$eenmin) Schakel($SIKristal, 'Off');
-		if($STVLed!='Off'&&$STTVLed<$eenmin) Schakel($SITVLed, 'Off');
-		if($SDenon!='Off'&&$STDenon<$eenmin) Schakel($SIDenon, 'Off');
-		if($SLamp_Bureel!='Off'&&$STLamp_Bureel<$eenmin) Schakel($SILamp_Bureel, 'Off');
-		if($STerras!='Off'&&$STTerras<$eenmin) Schakel($SITerras, 'Off');
-		if($SLicht_Garage!='Off'&&$STLicht_Garage<$eenmin) Schakel($SILicht_Garage, 'Off');
-		if($SLicht_Voordeur!='Off'&&$STLicht_Voordeur<$eenmin) Schakel($SILicht_Voordeur, 'Off');
-		if($SLicht_Hall!='Off'&&$STLicht_Hall<$eenmin&&$STPIR_Hall<$eenmin) Schakel($SILicht_Hall, 'Off');
-		if($SLicht_Inkom!='Off'&&$STLicht_Inkom<$eenmin&&$STPIR_Inkom<$eenmin) Schakel($SILicht_Inkom, 'Off');
-		if($SLicht_Zolder!='Off'&&$STLicht_Zolder<$eenmin) Schakel($SILicht_Zolder, 'Off');
-		if($SBureel_Tobi!='Off'&&$STBureel_Tobi<$eenmin) Schakel($SIBureel_Tobi, 'Off');
-		if($DKamer!='Off'&&$DTKamer<$eenuur) Schakel($DIEettafel, 'Off');
-		if($DEettafel!='Off'&&$DTEettafel<$eenmin) Schakel($DIEettafel, 'Off');
-		if($DZithoek!='Off'&&$DTZithoek<$eenmin) Schakel($DIZithoek, 'Off');
-		if($setpointLiving!=0 && $RTLiving<$eenuur) $mc->set('setpoint130',0);
-		if($setpointBadkamer!=0 && $RTBadkamer<$eenuur) $mc->set('setpoint111',0);
-		if($setpointKamer!=0 && $RTKamer<$eenuur) $mc->set('setpoint97',0);
-		if($setpointKamerTobi!=0 && $RTKamerTobi<$eenuur) $mc->set('setpoint548',0);
-		if($setpointKamerJulius!=0 && $RTKamerJulius<$eenuur) $mc->set('setpoint549',0);
-		if($SKeuken!='Off'&&$STKeuken<$eenmin) Schakel($SIKeuken, 'Off');
-		if($SWasbak!='Off'&&$STWasbak<$eenmin) Schakel($SIWasbak, 'Off');
-		if($SKookplaat!='Off'&&$STKookplaat<$eenmin) Schakel($SIKookplaat, 'Off');
-		if($SWerkblad!='Off'&&$STWerkblad<$eenmin) Schakel($SIWerkblad, 'Off');
-		if($SZolderG!='Off'&&$STZolderG<$eenmin) Schakel($SIZolderG, 'Off');
-		if($SKerstboom!='Off'&&$STKerstboom<$eenmin) Schakel($SIKerstboom, 'Off');
-		if($SiMac!='Off'&&$STiMac<$time-300) Schakel($SIiMac, 'Off');
+	if($Sthuis=='Off'||$Sslapen=="On") {
+		if($Stv!='Off'&&$STtv<$vijfmin) Schakel($SItv, 'Off');
+		if($Skristal!='Off'&&$STkristal<$vijfmin) Schakel($SIkristal, 'Off');
+		if($StvLed!='Off'&&$STtvLed<$vijfmin) Schakel($SItvLed, 'Off');
+		if($Sdenon!='Off'&&$STdenon<$vijfmin) Schakel($SIdenon, 'Off');
+		if($Slamp_bureel!='Off'&&$STlamp_bureel<$vijfmin) Schakel($SIlamp_bureel, 'Off');
+		if($Sterras!='Off'&&$STterras<$vijfmin) Schakel($SIterras, 'Off');
+		if($Slicht_garage!='Off'&&$STlicht_garage<$vijfmin) Schakel($SIlicht_garage, 'Off');
+		if($Slicht_voordeur!='Off'&&$STlicht_voordeur<$vijfmin) Schakel($SIlicht_voordeur, 'Off');
+		if($Slicht_hall!='Off'&&$STlicht_hall<$vijfmin&&$STpir_hall<$vijfmin) Schakel($SIlicht_hall, 'Off');
+		if($Slicht_inkom!='Off'&&$STlicht_inkom<$vijfmin&&$STpir_inkom<$vijfmin) Schakel($SIlicht_inkom, 'Off');
+		if($Slicht_Zolder!='Off'&&$STlicht_Zolder<$vijfmin) Schakel($SIlicht_Zolder, 'Off');
+		if($Sbureel_tobi!='Off'&&$STbureel_tobi<$vijfmin) Schakel($SIbureel_tobi, 'Off');
+		if($Dkamer!='Off'&&$DTkamer<$vijfmin) Schakel($DIeettafel, 'Off');
+		if($Deettafel!='Off'&&$DTeettafel<$vijfmin) Schakel($DIeettafel, 'Off');
+		if($Dzithoek!='Off'&&$DTzithoek<$vijfmin) Schakel($DIzithoek, 'Off');
+		if($setpointliving!=0 && $RTliving<$eenuur) $mc->set('setpoint130',0);
+		if($setpointbadkamer!=0 && $RTbadkamer<$eenuur) $mc->set('setpoint111',0);
+		if($setpointkamer!=0 && $RTkamer<$eenuur) $mc->set('setpoint97',0);
+		if($setpointkamertobi!=0 && $RTkamertobi<$eenuur) $mc->set('setpoint548',0);
+		if($setpointkamerjulius!=0 && $RTkamerjulius<$eenuur) $mc->set('setpoint549',0);
+		if($Skeuken!='Off'&&$STkeuken<$vijfmin) Schakel($SIkeuken, 'Off');
+		if($Swasbak!='Off'&&$STwasbak<$vijfmin) Schakel($SIwasbak, 'Off');
+		if($Skookplaat!='Off'&&$STkookplaat<$vijfmin) Schakel($SIkookplaat, 'Off');
+		if($Swerkblad!='Off'&&$STwerkblad<$vijfmin) Schakel($SIwerkblad, 'Off');
+		if($Szolderg!='Off'&&$STzolderg<$vijfmin) Schakel($SIzolderg, 'Off');
+		if($Skerstboom!='Off'&&$STkerstboom<$vijfmin) Schakel($SIkerstboom, 'Off');
+		if($Simac!='Off'&&$STimac<$vijfmin) Schakel($SIimac, 'Off');
 	}	
-	if($SThuis=='Off') {
-		if($SLichtBadkamer1!='Off'&&$STBadkamer1<$eenmin) Schakel($SIBadkamer1, 'Off');
-		if($SLichtBadkamer2!='Off'&&$STBadkamer2<$eenmin) Schakel($SIBadkamer1, 'Off');
+	if($Sthuis=='Off') {
+		if($Slichtbadkamer1!='Off'&&$STbadkamer1<$vijfmin) Schakel($SIbadkamer1, 'Off');
+		if($Slichtbadkamer2!='Off'&&$STbadkamer2<$vijfmin) Schakel($SIbadkamer1, 'Off');
 	}
 	
 	//Buienradar - Openweathermap
@@ -357,6 +338,7 @@ if($all) {
 			file_get_contents($domoticzurl.'type=command&param=udevice&idx=36&nvalue=0&svalue='.round($openweathermap['main']['temp'],1));
 		}
 	}
+	include('gcal/gcal.php');
 	unset($domoticz,$dom,$rain,$rains,$thermometers,$thermometer,$applepass,$appleid,$appledevice,$domoticzurl,$smsuser,$smsapi,$smspassword,$smstofrom,$user,$users,$db,$avg,$dimmer,$dimmers,$Set,$openweathermap,$Type,$SwitchType,$SubType,$name,$http_response_header,$_SERVER,$_FILES,$_COOKIE,$_POST);
 		
 } //END ALL
@@ -373,5 +355,5 @@ if($all) {
 	}
 
 }
-if($authenticated) 	echo '<hr>Number of vars: '.count(get_defined_vars()).'<br/><pre>';print_r(get_defined_vars());echo '</pre>';
+//if($authenticated) 	echo '<hr>Number of vars: '.count(get_defined_vars()).'<br/><pre>';print_r(get_defined_vars());echo '</pre>';
 //$execution= microtime(true)-$start;$phptime=$execution-$domotime;if($all) $msg='D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3).'|All';else $msg='D'.round($domotime,3).'|P'.round($phptime,3).'|T'.round($execution,3);telegram($msg);
