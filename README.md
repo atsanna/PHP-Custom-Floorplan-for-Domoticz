@@ -5,7 +5,7 @@ Requirements: PHP enabled webserver, I use Apache on the same RPi. memcached rec
 Authentication in Domoticz must be disabled for 127.0.0.1
 
 ##The Floorplan:<br>
-<img src="http://i.imgur.com/09PpGwB.png"/><br>
+<img src="http://i.imgur.com/us2iu3E.png"/><br>
 The page fits perfect on a iPhone5 and can be added on startscreen as an application for full screen viewing.
 It's built by using a background image with the layout of the house, on top of that lot's of fixed positioned DIVs.
 
@@ -18,6 +18,15 @@ On the left side: from top to bottom:
 - Buttons for scenes/groups like 'Listening to radio', 'Watch TV', 'Watch Kodi', 'Diner' and 'Switch everything off'.
 On the plan we see all thermometers, setpoints, radiator valves, smoke detectors, lights, open doors, open port, timestamp of motion sensors,...
 With the green home button and the sleepy smiley I switch the system in states 'Home/Away' or 'Sleeping'. Depending on those states lots of things happen in the cron script.  
+
+Dimmers are controlled by buttons: Instant On/off or a % value. 
+Also a wake and sleep function is available. These dims the light slowly on or off. 
+<img src="http://i.imgur.com/EaWXP91.png"/><br>
+
+Setpoints are controlled by buttons. Current room temperature is shown and current setpoint is marked in green.
+<img src="http://i.imgur.com/0EVOxUb.png"/><br>
+
+
 
 ##The script secure/hw2domoticz.php:
 Can be used to import the Smartwares weather sensors wich are connected to a Homewizard. 
