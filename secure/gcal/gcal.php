@@ -39,16 +39,17 @@ $service = new Google_Service_Calendar($client);
 $optParams = array('maxResults' => 5,'orderBy' => 'startTime','singleEvents' => TRUE,'timeMin' => date('c'),);
 $results = $service->events->listEvents($calendarId, $optParams);
 
-if($Sthuis=='Off'||$Sslapen=='On') $update = $driemin; else $update = $eenuur;
+$Sthuis=='Off'||$Sslapen=='On'?$update=$driemin:$update=$eenuur;
 if (count($results->getItems()) > 0) {
   foreach ($results->getItems() as $event) {
-    $start = strtotime($event->start->dateTime);
+    if(isset($event->start->dateTime)) $start = strtotime($event->start->dateTime);
     if (empty($start)) {
       $start = strtotime($event->start->date);
     }
 	$datetime = strftime("%a %e %b %k:%M:%S", $start);
+	printf("Event: %s at %s", $event->getSummary(), $datetime);
 	if($start<=$vijfsec){
-		printf("Event: %s at %s\n", $event->getSummary(), $datetime);
+		printf(" -> Now");
 		$item = explode(" ", $event->getSummary());
 		$action = strtolower($item[0]);
 		if($action=="licht") $action = "schakel";
@@ -64,16 +65,17 @@ if (count($results->getItems()) > 0) {
 			else if($detail=="uit") $detail = "Off";
 		}
 		if ($action=="wake") {
-			if(${'Dlevel'.$place}<1&&$mc->get('dimmer'.$place)!=2) {$mc->set('dimmer'.$place,2);Dim(${'DI'.$place},${'Dlevel'.$place}+1);}
+			if(${'Dlevel'.$place}<1&&$mc->get('dimmer'.$place)!=2) {$mc->set('dimmer'.$place,2);Dim(${'DI'.$place},${'Dlevel'.$place}+1);printf("-> Switched");}
 		} else if($action=="sleep") {
-			if(${'Dlevel'.$place}>1&&$mc->get('dimmer'.$place)!=1) {$mc->set('dimmer'.$place,1);Dim(${'DI'.$place},${'Dlevel'.$place}-1);}
+			if(${'Dlevel'.$place}>1&&$mc->get('dimmer'.$place)!=1) {$mc->set('dimmer'.$place,1);Dim(${'DI'.$place},${'Dlevel'.$place}-1);printf("-> Switched");}
 		} else if($action=="dimmer") {
-			if(${'Dlevel'.$place}!=$detail||${'DT'.$place}<$update) {Dim(${'DI'.$place},$detail);}
+			if(${'Dlevel'.$place}!=$detail||${'DT'.$place}<$update) {Dim(${'DI'.$place},$detail);printf("-> Switched");}
 		} else if($action=="schakel") {
-			if(${'S'.$place}!=$detail||${'ST'.$place}<$update) {Schakel(${'SI'.$place},$detail);}
+			if(${'S'.$place}!=$detail||${'ST'.$place}<$update) {Schakel(${'SI'.$place},$detail);printf("-> Switched");}
 		} else if($action=="setpoint") {
-			if(${'R'.$place}!=$detail||${'RT'.$place}<$update) {$mc->set('setpoint'.${'RI'.$place},2);Udevice(${'RI'.$place},0,$detail);}
+			if(${'R'.$place}!=$detail||${'RT'.$place}<$update) {$mc->set('setpoint'.${'RI'.$place},2);Udevice(${'RI'.$place},0,$detail);printf("-> Switched");}
 		}
 	}
+	printf("\n");
   }
 }
