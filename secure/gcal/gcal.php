@@ -1,4 +1,4 @@
-<?php
+<?php 
 require '/var/www/secure/gcal/autoload.php';
 define('APPLICATION_NAME', 'Domoticz');
 define('CREDENTIALS_PATH', '/var/www/secure/gcal/gcal.token.json');
