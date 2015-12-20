@@ -14,24 +14,63 @@ $smspassword = '***';
 $smsapi = 12345678;
 $smstofrom = 32123456789;
 $calendarId = 'primary';
-
+$LogFile = '/var/log/floorplan.log';
+$Usleep=10000;
 $authenticated = true;
 
 setlocale(LC_ALL,'nl_NL.UTF-8');setlocale(LC_ALL, 'nld_nld');date_default_timezone_set('Europe/Brussels');$time=time();
 $mc = new Memcached();$mc->addServer("localhost", 11211);
+$actions=0;$errors=0;$preverrors=$mc->get('errors');
 function ios($msg) {global $appleid,$applepass,$appledevice;include ("findmyiphone.php");$fmi=new FindMyiPhone($appleid,$applepass);$fmi->playSound($appledevice,$msg);sleep(2);}
 function sms($msg,$device) {file_get_contents('http://api.clickatell.com/http/sendmsg?user='.$smsuser.'&password='.$smspassword.'&api_id='.$smsapi.'&to='.$smstofrom.'&text='.urlencode($msg).'&from='.$smstofrom.'');}
-function domlog($msg) {global $domoticzurl;file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));usleep(50000);}
+function domlog($msg) {global $domoticzurl;file_get_contents($domoticzurl.'type=command&param=addlogmessage&message='.urlencode($msg));usleep($Usleep);}
 function telegram($msg) {global $telegrambot,$telegramchatid;$url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=array('chat_id'=>$telegramchatid,'text'=>$msg);$options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),),);$context=stream_context_create($options);$result=file_get_contents($url,false,$context);return $result;}
-function Schakel($idx,$cmd) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Schakel '.$idx.' '.$cmd);usleep(50000);return $reply;}
-function Scene($idx) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Scene '.$idx);usleep(50000);return $reply;}	
-function Dim($idx,$level) {global $domoticzurl,$user;if($level>0&&$level<100) $level=$level+1;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi dimmer '.$idx.' '.$cmd);usleep(50000);return $reply;}	
-function Udevice($idx, $nvalue, $svalue) {global $domoticzurl,$user;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';if($user=="Tobi") telegram('Tobi Udevice '.$idx.' '.$nvalue.' '.$snvalue);usleep(50000);return $reply;}
-function Textdevice($idx,$text) {global $domoticzurl;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$text),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep(50000);return $reply;}
-function percentdevice($idx,$value) {global $domoticzurl;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$value),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep(50000);return $reply;}
+function Schakel($idx,$cmd,$name=NULL) {
+	global $domoticzurl,$user,$actions,$Usleep,$errors;
+	$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'&switchcmd='.$cmd),true);
+	if($reply['status']=='OK') $reply='OK';else {$reply='ERROR';$errors=$errors+1;}
+	logwrite('Switch '.$idx.' '.$name.' '.$cmd.' by '.$user.' = '.$reply);
+	if($user=="Tobi") telegram('Tobi Schakel '.$idx.' '.$cmd);
+	usleep($Usleep);
+	$actions=$actions+1;
+	return $reply;
+}
+function Scene($idx,$name=NULL) {
+	global $domoticzurl,$user,$actions,$Usleep,$errors;
+	$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchscene&idx='.$idx.'&switchcmd=On'),true);
+	if($reply['status']=='OK') $reply='OK';else {$reply='ERROR';$errors=$errors+1;}
+	logwrite('Scene '.$idx.' '.$name.' by '.$user.' = '.$reply);
+	if($user=="Tobi") telegram('Tobi Scene '.$idx);
+	$actions=$actions+1;
+	usleep($Usleep);
+	return $reply;
+}	
+function Dim($idx,$level,$name=NULL) {
+	global $domoticzurl,$user,$actions,$Usleep,$errors;
+	if($level>0&&$level<100) $level=$level+1;
+	$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=switchlight&idx='.$idx.'=&switchcmd=Set%20Level&level='.$level),true);
+	if($reply['status']=='OK') $reply='OK';else {$reply='ERROR';$errors=$errors+1;}
+	logwrite('Dim '.$idx.' '.$name.' level'.$level.' by '.$user.' = '.$reply);
+	if($user=="Tobi") telegram('Tobi dimmer '.$idx.' '.$cmd);
+	$actions=$actions+1;
+	usleep($Usleep);
+	return $reply;
+}	
+function Udevice($idx,$nvalue,$svalue,$name=NULL) {
+	global $domoticzurl,$user,$actions,$Usleep,$errors;
+	$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue='.$nvalue.'&svalue='.$svalue),true);
+	if($reply['status']=='OK') $reply='OK';else {$reply='ERROR';$errors=$errors+1;}
+	logwrite('Udevice '.$idx.' '.$name.' N='.$nvalue.' S='.$svalue.' by '.$user.' = '.$reply);
+	if($user=="Tobi") telegram('Tobi Udevice '.$idx.' '.$nvalue.' '.$snvalue);
+	$actions=$actions+1;
+	usleep($Usleep);
+	return $reply;
+}
+function Textdevice($idx,$text,$name=NULL) {global $domoticzurl,$actions;$actions=$actions+1;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$text),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep($Usleep);return $reply;}
+function percentdevice($idx,$value,$name=NULL) {global $domoticzurl,$actions;$actions=$actions+1;$reply=json_decode(file_get_contents($domoticzurl.'type=command&param=udevice&idx='.$idx.'&nvalue=0&svalue='.$value),true);if($reply['status']=='OK') $reply='OK';else $reply='ERROR';usleep($Usleep);return $reply;}
 function voorwarmen($temp, $settemp,$seconds) {
-	global $TBuiten;
-	if($temp<$settemp) $voorwarmen = ceil(($settemp-$temp) + ($settemp-$TBuiten)) * $seconds; else $voorwarmen = 0;
+	global $Tbuiten;
+	if($temp<$settemp) $voorwarmen = ceil(($settemp-$temp) + ($settemp-$Tbuiten)) * $seconds; else $voorwarmen = 0;
 	if($voorwarmen>7200) $voorwarmen=7200;
 	return $voorwarmen;
 }
@@ -40,6 +79,7 @@ function setradiator($temp,$setpoint) {
 	if($setpointSet>28) $setpointSet=28;else if ($setpointSet<4) $setpointSet=4;
 	return $setpointSet;
 }
+//Functions for webdesign
 function Thermometer($name, $size, $boven, $links) {
 	global ${'T'.$name},${'TI'.$name},${'TT'.$name}, $time;
 	$hoogte=${'T'.$name}*$size*0.0275;
@@ -73,55 +113,24 @@ function Dimmer($name,$size,$boven,$links) {
 	global ${'D'.$name},${'DI'.$name},${'Dlevel'.$name},${'DT'.$name};
 	echo '<div id="D'.$name.'" class="dimmer" style="display:none;">
 				<form method="POST" action="floorplan.php" oninput="level.value = dimlevel.valueAsNumber">
-    			<div style="position:absolute;top:-5px;left:30px;z-index:1000;"><h2>'.$name.': '.round(${'Dlevel'.$name},0).'%</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'"></div>
+    			<div style="position:absolute;top:-5px;left:30px;z-index:1000;"><h2>'.ucwords($name).': '.round(${'Dlevel'.$name},0).'%</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="dimmer" value="'.${'DI'.$name}.'"></div>
 				<div style="position:absolute;top:100px;left:28px;z-index:1000;"><input type="image" name="dimleveloff" value ="0" src="images/off.png" width="90px" height="90px"/></div>
 				<div style="position:absolute;top:100px;left:150px;z-index:1000;"><input type="image" name="dimwake" value ="100" src="images/Wakeup.png" width="90px" height="90px"/><input type="hidden" name="dimwakelevel" value="'.${'Dlevel'.$name}.'"></div>
 				<div style="position:absolute;top:100px;left:265px;z-index:1000;"><input type="image" name="dimsleep" value ="100" src="images/Sleepy.png" width="90px" height="90px"/></div>
 				<div style="position:absolute;top:100px;left:387px;z-index:1000;"><input type="image" name="dimlevelon" value ="100" src="images/on.png" width="90px" height="90px"/></div>
-				<div style="position:absolute;top:210px;left:10px;z-index:1000;">
-					<input type="submit" name="dimlevel" value="1"/>
-					<input type="submit" name="dimlevel" value="2"/>
-					<input type="submit" name="dimlevel" value="3"/>
-					<input type="submit" name="dimlevel" value="4"/>
-					<input type="submit" name="dimlevel" value="5"/>
-					<input type="submit" name="dimlevel" value="6"/>
-					<input type="submit" name="dimlevel" value="7"/>
-					<input type="submit" name="dimlevel" value="8"/>
-					<input type="submit" name="dimlevel" value="9"/>
-					<input type="submit" name="dimlevel" value="10"/>
-					<input type="submit" name="dimlevel" value="12"/>
-					<input type="submit" name="dimlevel" value="14"/>
-					<input type="submit" name="dimlevel" value="16"/>
-					<input type="submit" name="dimlevel" value="18"/>
-					<input type="submit" name="dimlevel" value="20"/>
-					<input type="submit" name="dimlevel" value="22"/>
-					<input type="submit" name="dimlevel" value="24"/>
-					<input type="submit" name="dimlevel" value="26"/>
-					<input type="submit" name="dimlevel" value="28"/>
-					<input type="submit" name="dimlevel" value="30"/>
-					<input type="submit" name="dimlevel" value="32"/>
-					<input type="submit" name="dimlevel" value="35"/>
-					<input type="submit" name="dimlevel" value="40"/>
-					<input type="submit" name="dimlevel" value="45"/>
-					<input type="submit" name="dimlevel" value="50"/>
-					<input type="submit" name="dimlevel" value="55"/>
-					<input type="submit" name="dimlevel" value="60"/>
-					<input type="submit" name="dimlevel" value="65"/>
-					<input type="submit" name="dimlevel" value="70"/>
-					<input type="submit" name="dimlevel" value="75"/>
-					<input type="submit" name="dimlevel" value="80"/>
-					<input type="submit" name="dimlevel" value="85"/>
-					<input type="submit" name="dimlevel" value="90"/>
-					<input type="submit" name="dimlevel" value="95"/>
-					<input type="submit" name="dimlevel" value="100"/>
-				</div>
-    			</form>
+				<div style="position:absolute;top:210px;left:10px;z-index:1000;">';
+				$levels=array(1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,35,40,45,50,55,60,65,70,75,80,85,90,95,100);
+				foreach($levels as $level) {
+					if(${'Dlevel'.$name}==$level) echo '<input type="submit" name="dimlevel" value="'.$level.'"/ style="background-color:#5fed5f;background:linear-gradient(to bottom, #5fed5f, #017a01);">';
+					else echo '<input type="submit" name="dimlevel" value="'.$level.'"/>';
+				}
+				echo '</div></form>
 				<div style="position:absolute;top:5px;right:5px;z-index:1000;"><a href=""><img src="images/close.png" width="72px" height="72px"/></a></div>
 			</div>
 	<div style="position:absolute;top:'.$boven.'px;left:'.$links.'px;">
 	<a href="#" onclick="toggle_visibility(\'D'.$name.'\');" style="text-decoration:none">';
 	echo ${'D'.$name}=='Off'?'<input type="image" src="images/Light_Off.png" height="'.$size.'px" width="auto">'
-							:'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto"><div style="position:absolute;top:6px;right:16px;">'.${'Dlevel'.$name}.'</div>';
+							:'<input type="image" src="images/Light_On.png" height="'.$size.'px" width="auto"><div style="position:absolute;top:5px;left:14px;width:20px;text-align:center">'.${'Dlevel'.$name}.'</div>';
 	echo '</a></div>';
 }
 function Setpoint($name,$size,$boven,$links) {
@@ -129,7 +138,7 @@ function Setpoint($name,$size,$boven,$links) {
 	echo '<div id="S'.$name.'" class="dimmer" style="display:none;">
 	
 		<form method="POST" action="floorplan.php" oninput="level.value = Actie.valueAsNumber"><input type="hidden" name="Setpoint" value="'.${'RI'.$name}.'" >
-    <h2>'.$name.' = '.${'T'.$name}.'°C</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="setpoint" value="'.${'RI'.$name}.'">
+    <h2>'.ucwords($name).' = '.${'T'.$name}.'°C</h2><input type="hidden" name="Naam" value="'.$name.'"><input type="hidden" name="setpoint" value="'.${'RI'.$name}.'">
 		<div style="position:absolute;top:150px;left:10px;z-index:1000;">';
 		$temps=array(5,8,10,12,14,15,16,17,18,19,20,21,22,23,24);
 		foreach($temps as $temp) {
@@ -171,14 +180,8 @@ function Motion($boven, $links, $breed, $hoog) {
 	if($SThuis=='Off'||$SSlapen=='On') echo '<div class="motionr" style="top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;"></div>';
 												 else echo '<div class="motion" style="top:'.$boven.'px;left:'.$links.'px;width:'.$breed.'px;height:'.$hoog.'px;"></div>';
 }
-function RefreshZwave($node) {
-	global $domoticzurl;
-	file_get_contents($domoticzurl.'type=openzwavenodes&idx=5');
-	$zwaveurl='http://127.0.0.1:1602/ozwcp/refreshpost.html';
-	$zwavedata=array('fun'=>'racp','node'=>$node);
-	$zwaveoptions = array('http'=>array('header'=>'Content-Type: application/x-www-form-urlencoded\r\n','method'=>'POST','content'=>http_build_query($zwavedata),),);
-	$zwavecontext=stream_context_create($zwaveoptions);
-	for ($k=1;$k<=5;$k++){sleep(2);$result=file_get_contents($zwaveurl,false,$zwavecontext);if($result=='OK') break;}
+function RefreshZwave($node,$name) {
+	shell_exec('/var/www/secure/refreshzwave.sh '.$node.' '.$name);
 }
 function curl($url){
     $headers = array(
@@ -203,4 +206,28 @@ function pingDomain($domain, $port){
         $status = floor(($stoptime - $starttime) * 1000);
     }
     return $status;
+}
+function get_server_memory_usage(){
+    $free = shell_exec('free');
+    $free = (string)trim($free);
+    $free_arr = explode("\n", $free);
+    $mem = explode(" ", $free_arr[1]);
+    $mem = array_filter($mem);
+    $mem = array_merge($mem);
+    $memory_usage = $mem[2]/$mem[1]*100;
+    return $memory_usage;
+}
+function get_server_cpu_usage(){
+    $load = sys_getloadavg();
+    return $load[0];
+}
+function logwrite($msg,$msg2 = NULL) {
+	global $LogFile;
+	$time    = microtime(true);
+	$dFormat = "Y-m-d H:i:s";
+	$mSecs   =  $time - floor($time);
+	$mSecs   =  substr(number_format($mSecs,3),1);
+	$fp = fopen($LogFile,"a+");
+	fwrite($fp, sprintf("%s%s %s %s\r\n", date($dFormat), $mSecs, $msg, $msg2));
+	fclose($fp);
 }
