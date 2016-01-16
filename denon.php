@@ -27,7 +27,7 @@ h2{font-size:12px}
 </head>
 <body>
 <?php
-$denon_address = 'http://192.168.0.2';
+$denon_address = 'http://192.168.0.15';
 if(isset($_COOKIE["HomeEgregius"])) {
 if(isset($_POST['action'])) {
 	file_get_contents($denon_address.'/'.$_POST['action']);

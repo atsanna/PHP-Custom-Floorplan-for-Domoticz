@@ -9,11 +9,11 @@ if($authenticated == true) {
 	else {$sensor = 38; $sensornaam = 'Living';}
 	echo '<div class="isotope">';
 	switch($sensor) {
-		case 329:$setpoint = 549;break;//Slaapkamer Julius
-		case 541:$setpoint = 548;break;//Slaapkamer Tobi
-		case 543:$setpoint = 130;break;//Living
-		case 566:$setpoint = 111;break;//Badkamer
-		case 582:$setpoint = 97;break;//Kamer
+		case 210:$setpoint = 85;break;//Living
+		case 231:$setpoint = 86;break;//Badkamer
+		case 232:$setpoint = 87;break;//Kamer
+		case 233:$setpoint = 88;break;//Slaapkamer Tobi
+		case 235:$setpoint = 89;break;//Slaapkamer Julius
 		default:$setpoint = 0;break;
 	}
 	if($setpoint>0) {
